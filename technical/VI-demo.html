@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Filmer VI Demo — Vintage</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #141210;
+      --card: #1E1B17;
+      --paper: #EDE5D8;
+      --brass: #C9A96E;
+      --kodak: #C25B2B;
+      --text-dark: #2C2C2C;
+      --text-light: #9A9080;
+      --divider: #3A3530;
+      --vintage-warm: #D4A574;
+    }
+
+    body {
+      background: var(--primary);
+      color: var(--paper);
+      font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+      padding-bottom: 80px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ─── Film Grain Overlay ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+
+    /* ─── Page Vignette ─── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(10,8,6,0.7) 100%);
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ─── Film Strip Edges ─── */
+    .film-strip-left,
+    .film-strip-right {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 28px;
+      background: #0D0B09;
+      z-index: 9997;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      padding: 8px 0;
+    }
+    .film-strip-left { left: 0; }
+    .film-strip-right { right: 0; }
+    .sprocket {
+      width: 14px;
+      height: 10px;
+      background: #0D0B09;
+      border: 1.5px solid #2A2520;
+      border-radius: 2px;
+      margin: 0 auto;
+    }
+
+    /* ─── Worn Edge Effect ─── */
+    .worn-edge {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9996;
+      box-shadow: inset 0 0 80px rgba(10,8,6,0.6);
+    }
+
+    /* ─── Header ─── */
+    .header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      background: rgba(20,18,16,0.92);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px 0 48px;
+      border-bottom: 1px solid var(--divider);
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--paper);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      position: relative;
+    }
+    .logo::after {
+      content: '®';
+      font-size: 9px;
+      position: absolute;
+      top: 4px;
+      right: -12px;
+      color: var(--brass);
+    }
+    .header-icons { display: flex; gap: 16px; }
+    .header-icon {
+      width: 22px; height: 22px;
+      stroke: var(--brass);
+      stroke-width: 1.5;
+      fill: none;
+      opacity: 0.85;
+    }
+
+    /* ─── Phone Frame ─── */
+    .phone-frame {
+      max-width: 420px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-top: 56px;
+      padding-left: 28px;
+      padding-right: 28px;
+    }
+
+    /* ─── Topic Scroll ─── */
+    .topic-scroll {
+      display: flex;
+      gap: 8px;
+      padding: 16px 0 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .topic-scroll::-webkit-scrollbar { display: none; }
+    .topic-tag {
+      padding: 5px 14px;
+      border: 1px solid var(--divider);
+      border-radius: 3px;
+      font-size: 12px;
+      color: var(--text-light);
+      white-space: nowrap;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px;
+      transition: all 0.25s;
+      background: rgba(255,255,255,0.02);
+    }
+    .topic-tag.active {
+      border-color: var(--brass);
+      color: var(--brass);
+      background: rgba(201,169,110,0.08);
+      box-shadow: 0 0 12px rgba(201,169,110,0.1);
+    }
+
+    /* ─── Feed ─── */
+    .feed { padding: 8px 0 24px; }
+    .feed-card {
+      background: var(--card);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3);
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .feed-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(201,169,110,0.03) 0%, transparent 30%);
+      pointer-events: none;
+    }
+
+    /* Film frame edge markings */
+    .feed-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, var(--brass) 20%, var(--brass) 80%, transparent 100%);
+      opacity: 0.25;
+    }
+
+    .feed-img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: linear-gradient(160deg, #252017 0%, #1A1510 50%, #141008 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .feed-img::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(201,169,110,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.5) 100%);
+    }
+    .feed-img-text {
+      font-size: 42px;
+      opacity: 0.12;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--brass);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Corner frame numbers (film canister style) */
+    .frame-number {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      color: rgba(201,169,110,0.3);
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .feed-info { padding: 12px 14px; }
+    .film-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .film-tag {
+      background: rgba(201,169,110,0.08);
+      color: var(--brass);
+      border: 1px solid rgba(201,169,110,0.2);
+      border-radius: 2px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+    .film-meta {
+      font-size: 11px;
+      color: var(--text-light);
+      margin-bottom: 10px;
+      font-family: 'Inter', sans-serif;
+    }
+    .feed-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-light);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+    }
+    .action-icon {
+      width: 18px; height: 18px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .action-item.liked { color: var(--kodak); }
+
+    /* ─── Bottom Tab ─── */
+    .tab-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: rgba(20,18,16,0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 100;
+      padding-bottom: 4px;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--text-light);
+      font-size: 9px;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px;
+      transition: color 0.2s;
+    }
+    .tab-item.active { color: var(--brass); }
+    .tab-icon {
+      width: 24px; height: 24px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    /* ─── Section Divider ─── */
+    .section-title {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-light);
+      padding: 32px 0 16px;
+      border-top: 1px solid var(--divider);
+      margin-top: 8px;
+      font-family: 'Inter', sans-serif;
+    }
+    .section-title:first-child { border-top: none; padding-top: 20px; }
+
+    /* ─── Color Swatches ─── */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .color-swatch {
+      text-align: center;
+    }
+    .swatch-box {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 2px;
+      margin-bottom: 6px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .swatch-label {
+      font-size: 9px;
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px;
+    }
+    .swatch-hex {
+      font-size: 10px;
+      color: var(--paper);
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+    }
+
+    /* ─── Typography ─── */
+    .type-showcase { padding: 0; }
+    .type-row {
+      padding: 18px 0;
+      border-bottom: 1px solid rgba(58,53,48,0.5);
+    }
+    .type-label {
+      font-size: 9px;
+      color: var(--text-light);
+      margin-bottom: 10px;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ─── Button Demo ─── */
+    .btn-demo { padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .btn {
+      height: 44px;
+      border-radius: 3px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Noto Sans SC', sans-serif;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 50%);
+    }
+    .btn-primary {
+      background: linear-gradient(180deg, #D4B578 0%, #C9A96E 50%, #B8944F 100%);
+      color: #1A1208;
+      box-shadow: 0 2px 12px rgba(201,169,110,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--divider);
+      color: var(--paper);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+    }
+    .btn-danger {
+      background: linear-gradient(180deg, #D06A3A 0%, #C25B2B 100%);
+      color: #FFF5E8;
+      box-shadow: 0 2px 12px rgba(194,91,43,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .btn-ghost { background: transparent; color: var(--brass); }
+
+    /* ─── Input Demo ─── */
+    .input-demo { padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .input-field {
+      background: rgba(30,27,23,0.8);
+      border: 1px solid var(--divider);
+      border-radius: 3px;
+      color: var(--paper);
+      padding: 12px 14px;
+      font-size: 14px;
+      font-family: 'Noto Sans SC', sans-serif;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .input-field:focus {
+      border-color: var(--brass);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.3), 0 0 0 2px rgba(201,169,110,0.1);
+    }
+    .input-field::placeholder { color: var(--text-light); }
+
+    /* ─── Tag Demo ─── */
+    .tag-demo { padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* ─── Vintage Film Strip Banner ─── */
+    .vintage-banner {
+      background: linear-gradient(180deg, #1A1510 0%, #141008 100%);
+      border: 1px solid var(--divider);
+      border-radius: 3px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      margin: 24px 0;
+    }
+    .vintage-banner::before {
+      content: 'KODAK · EASTMAN · 35mm · ISO 400';
+      position: absolute;
+      top: 8px;
+      left: 0;
+      right: 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 7px;
+      letter-spacing: 3px;
+      color: rgba(201,169,110,0.2);
+    }
+    .vintage-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(201,169,110,0.03) 50%, transparent 100%);
+    }
+    .vintage-banner-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--paper);
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+    .vintage-banner-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      color: var(--text-light);
+      letter-spacing: 3px;
+    }
+
+    /* ─── Film Roll Decoration ─── */
+    .film-roll-strip {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 20px 0;
+      background: #1A1510;
+      border: 1px solid var(--divider);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .film-roll-strip .roll-circle {
+      width: 48px;
+      height: 48px;
+      background: conic-gradient(from 0deg, #C9A96E 0%, #8B6B3D 25%, #C9A96E 50%, #8B6B3D 75%, #C9A96E 100%);
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 3px #1A1510;
+    }
+    .film-roll-strip .roll-text {
+      padding: 0 16px;
+      flex: 1;
+    }
+    .roll-text-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 14px;
+      color: var(--paper);
+      font-weight: 700;
+    }
+    .roll-text-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      color: var(--text-light);
+      letter-spacing: 1px;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- Film strip perforations -->
+<div class="film-strip-left">
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+</div>
+<div class="film-strip-right">
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+  <div class="sprocket"></div><div class="sprocket"></div><div class="sprocket"></div>
+</div>
+
+<!-- Worn vignette edges -->
+<div class="worn-edge"></div>
+
+<!-- ═══ PHONE FRAME ═══ -->
+<div class="phone-frame">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">Filmer</div>
+    <div class="header-icons">
+      <svg class="header-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <svg class="header-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+  </div>
+
+  <!-- Vintage Banner -->
+  <div class="vintage-banner" style="margin-top: 16px;">
+    <div class="vintage-banner-text">Every Roll is Limited</div>
+    <div class="vintage-banner-sub">FILM NEVER DIES</div>
+  </div>
+
+  <!-- Section: 首页 Feed 预览 -->
+  <div class="section-title">— Home Feed —</div>
+
+  <!-- Topics -->
+  <div class="topic-scroll">
+    <div class="topic-tag active"># 今日冲洗</div>
+    <div class="topic-tag"># 我的第一卷</div>
+    <div class="topic-tag"># 反转片挑战</div>
+    <div class="topic-tag"># 哈苏收藏</div>
+    <div class="topic-tag"># 黑白肖像</div>
+  </div>
+
+  <!-- Feed Cards -->
+  <div class="feed">
+    <div class="feed-card">
+      <div class="feed-img">
+        <span class="feed-img-text">PORTRA</span>
+        <span class="frame-number">#012</span>
+      </div>
+      <div class="feed-info">
+        <div class="film-tags">
+          <span class="film-tag">Kodak Portra 400</span>
+          <span class="film-tag">135 · C-41</span>
+        </div>
+        <div class="film-meta">徕卡 M6 · 映画馆冲扫 · 2026.07</div>
+        <div class="feed-actions">
+          <div class="action-item liked">
+            <svg class="action-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            1.2k
+          </div>
+          <div class="action-item">
+            <svg class="action-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            89
+          </div>
+          <div class="action-item">
+            <svg class="action-icon" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feed-card">
+      <div class="feed-img" style="aspect-ratio: 3/4;">
+        <span class="feed-img-text">VELVIA</span>
+        <span class="frame-number">#007</span>
+      </div>
+      <div class="feed-info">
+        <div class="film-tags">
+          <span class="film-tag">Fuji Velvia 50</span>
+          <span class="film-tag">120 · 6×6 · E-6</span>
+        </div>
+        <div class="film-meta">哈苏 500CM · 上海胶片时代 · 2026.06</div>
+        <div class="feed-actions">
+          <div class="action-item">
+            <svg class="action-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            876
+          </div>
+          <div class="action-item">
+            <svg class="action-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            45
+          </div>
+          <div class="action-item">
+            <svg class="action-icon" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Film Roll Strip Decoration -->
+  <div class="film-roll-strip">
+    <div class="roll-circle"></div>
+    <div class="roll-text">
+      <div class="roll-text-title">Portra 400</div>
+      <div class="roll-text-sub">THE WORLD'S MOST POPULAR FILM</div>
+    </div>
+  </div>
+
+  <!-- Bottom Tab Bar -->
+  <div class="tab-bar">
+    <div class="tab-item active">
+      <svg class="tab-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>发现</span>
+    </div>
+    <div class="tab-item">
+      <svg class="tab-icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span>记录</span>
+    </div>
+    <div class="tab-item">
+      <svg class="tab-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <span>租赁</span>
+    </div>
+    <div class="tab-item">
+      <svg class="tab-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>我的</span>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION: 色彩 ═══ -->
+  <div class="section-title">— Color Palette —</div>
+  <div class="color-grid">
+    <div class="color-swatch">
+      <div class="swatch-box" style="background: #141210;"></div>
+      <div class="swatch-label">胶片黑</div>
+      <div class="swatch-hex">#141210</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-box" style="background: #1E1B17;"></div>
+      <div class="swatch-label">卡片底</div>
+      <div class="swatch-hex">#1E1B17</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-box" style="background: #EDE5D8;"></div>
+      <div class="swatch-label">银盐白</div>
+      <div class="swatch-hex">#EDE5D8</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-box" style="background: #C9A96E;"></div>
+      <div class="swatch-label">黄铜色</div>
+      <div class="swatch-hex">#C9A96E</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-box" style="background: #C25B2B;"></div>
+      <div class="swatch-label">Kodak红</div>
+      <div class="swatch-hex">#C25B2B</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-box" style="background: #9A9080;"></div>
+      <div class="swatch-label">文字浅</div>
+      <div class="swatch-hex">#9A9080</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-box" style="background: #D4A574;"></div>
+      <div class="swatch-label">暖色调</div>
+      <div class="swatch-hex">#D4A574</div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-box" style="background: #3A3530;"></div>
+      <div class="swatch-label">分割线</div>
+      <div class="swatch-hex">#3A3530</div>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION: 字体 ═══ -->
+  <div class="section-title">— Typography —</div>
+  <div class="type-showcase">
+    <div class="type-row">
+      <div class="type-label">品牌标题 — Playfair Display / 700</div>
+      <div style="font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--paper); letter-spacing: 3px;">FILMER</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">中文正文 — 思源黑体 / 400</div>
+      <div style="font-family: 'Noto Sans SC', sans-serif; font-size: 14px; color: var(--paper); line-height: 1.7;">每一卷都是限量版，每一张都有温度。</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">英文/数字 — Inter / 600</div>
+      <div style="font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 600; color: var(--brass); letter-spacing: 1px;">ISO 400 · f/2.8 · 1/125s</div>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION: 按钮 ═══ -->
+  <div class="section-title">— Buttons —</div>
+  <div class="btn-demo" style="padding-bottom: 40px;">
+    <button class="btn btn-primary">开通银会员 · ¥29/月</button>
+    <button class="btn btn-secondary">查看更多</button>
+    <button class="btn btn-danger">立即下单</button>
+    <button class="btn btn-ghost">了解更多 →</button>
+  </div>
+
+  <!-- ═══ SECTION: 输入框 ═══ -->
+  <div class="section-title">— Inputs —</div>
+  <div class="input-demo" style="padding-bottom: 40px;">
+    <input class="input-field" placeholder="搜索胶卷型号、相机..." type="text">
+    <input class="input-field" placeholder="写下你的拍摄心得..." type="text">
+  </div>
+
+  <!-- ═══ SECTION: 标签 ═══ -->
+  <div class="section-title">— Film Tags —</div>
+  <div class="tag-demo" style="padding-bottom: 60px;">
+    <span class="film-tag">Kodak Portra 400</span>
+    <span class="film-tag">Fuji Velvia 50</span>
+    <span class="film-tag">135 全画幅</span>
+    <span class="film-tag">120 · 6×6</span>
+    <span class="film-tag">哈苏 500CM</span>
+    <span class="film-tag">徕卡 M6</span>
+    <span class="film-tag">E-6 冲洗</span>
+    <span class="film-tag">C-41 冲洗</span>
+  </div>
+
+</div>
+
+</body>
+</html>
