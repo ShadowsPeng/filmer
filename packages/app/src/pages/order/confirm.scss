@@ -1,0 +1,12 @@
+.page { padding: 16px 16px 100px; min-height: 100vh; }
+.section { padding: 18px 0; border-bottom: 1px solid #2a2520; }
+.section-title { display: block; font-size: 14px; color: #9A9080; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.row { display: block; color: #EDE5D8; font-size: 14px; margin: 4px 0; }
+.row.sub { color: #9A9080; font-size: 12px; }
+.input { display: block; background: #1E1B17; border: 1px solid #3A3530; border-radius: 4px; padding: 12px; color: #EDE5D8; margin: 8px 0; font-size: 14px; }
+.textarea { display: block; width: 100%; box-sizing: border-box; background: #1E1B17; border: 1px solid #3A3530; border-radius: 4px; padding: 12px; color: #EDE5D8; margin: 8px 0; min-height: 64px; font-size: 14px; }
+.footer { position: fixed; bottom: 0; left: 0; right: 0; background: #141210; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2a2520; }
+.total-label { font-size: 11px; color: #9A9080; display: block; }
+.total { font-size: 22px; font-weight: 700; color: #C9A96E; }
+.primary { background: linear-gradient(135deg, #D4B578, #B8944F); padding: 10px 18px; border-radius: 4px; color: #141210; font-weight: 600; font-size: 14px; }
+.primary.disabled { opacity: 0.5; }

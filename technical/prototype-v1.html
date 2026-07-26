@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Filmer — 原型 v1</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #141210;
+      --card: #1E1B17;
+      --paper: #EDE5D8;
+      --brass: #C9A96E;
+      --kodak: #C25B2B;
+      --text-light: #9A9080;
+      --divider: #3A3530;
+    }
+
+    html, body {
+      height: 100%;
+      background: #0D0B09;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ─── Phone Device Frame ─── */
+    .phone-device {
+      width: 375px;
+      height: 812px;
+      background: #141210;
+      border-radius: 44px;
+      box-shadow:
+        0 0 0 12px #1C1C1E,
+        0 0 0 14px #2C2C2E,
+        0 30px 60px rgba(0,0,0,0.7),
+        0 0 120px rgba(201,169,110,0.05);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Notch */
+    .phone-device::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #141210;
+      border-radius: 0 0 20px 20px;
+      z-index: 300;
+    }
+
+    /* Home indicator */
+    .phone-device::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+      z-index: 300;
+    }
+
+    /* ─── Scrollable Screen Area ─── */
+    .phone-screen {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      padding-top: 30px; /* notch clearance */
+    }
+
+    .phone-screen::-webkit-scrollbar { display: none; }
+
+    /* ─── Screens ─── */
+    .screen {
+      display: none;
+      min-height: 100%;
+      padding: 0 16px;
+    }
+    .screen.active { display: block; }
+
+    /* ─── Header ─── */
+    .header {
+      position: sticky;
+      top: 0;
+      height: 52px;
+      background: rgba(20,18,16,0.95);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2px;
+      z-index: 50;
+      border-bottom: 1px solid var(--divider);
+      margin: 0 -16px;
+      padding: 0 16px;
+    }
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--paper);
+      letter-spacing: 2px;
+    }
+    .logo sup { font-size: 8px; color: var(--brass); vertical-align: super; }
+    .header-icons { display: flex; gap: 14px; align-items: center; }
+    .header-icon {
+      width: 22px; height: 22px;
+      stroke: var(--brass);
+      stroke-width: 1.5;
+      fill: none;
+      cursor: pointer;
+    }
+
+    /* ─── Banner ─── */
+    .home-banner {
+      background: linear-gradient(180deg, #1A1510 0%, #141008 100%);
+      border: 1px solid var(--divider);
+      border-radius: 3px;
+      padding: 14px 16px;
+      text-align: center;
+      margin: 14px 0 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .home-banner::before {
+      content: 'KODAK · EASTMAN · 35mm · ISO 400';
+      position: absolute;
+      top: 6px; left: 0; right: 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 6px;
+      letter-spacing: 2.5px;
+      color: rgba(201,169,110,0.18);
+    }
+    .banner-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--paper);
+      letter-spacing: 2px;
+    }
+    .banner-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      color: var(--text-light);
+      letter-spacing: 3px;
+      margin-top: 2px;
+    }
+
+    /* ─── Sort Tabs ─── */
+    .sort-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 12px;
+    }
+    .sort-tab {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      color: var(--text-light);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .sort-tab.active { color: var(--brass); border-bottom-color: var(--brass); }
+
+    /* ─── Topics ─── */
+    .topic-scroll {
+      display: flex;
+      gap: 8px;
+      padding-bottom: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-bottom: 1px solid var(--divider);
+      margin-bottom: 14px;
+    }
+    .topic-scroll::-webkit-scrollbar { display: none; }
+    .topic-tag {
+      padding: 4px 12px;
+      border: 1px solid var(--divider);
+      border-radius: 3px;
+      font-size: 11px;
+      color: var(--text-light);
+      white-space: nowrap;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .topic-tag.active {
+      border-color: var(--brass);
+      color: var(--brass);
+      background: rgba(201,169,110,0.08);
+    }
+
+    /* ─── Feed Cards ─── */
+    .feed { padding-bottom: 76px; }
+    .feed-card {
+      background: var(--card);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .feed-card:active { transform: scale(0.97); }
+    .feed-card::before {
+      content: '';
+      display: block;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--brass) 20%, var(--brass) 80%, transparent 100%);
+      opacity: 0.2;
+    }
+
+    .card-img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: linear-gradient(160deg, #252017 0%, #1A1510 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-img-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      opacity: 0.1;
+      font-weight: 700;
+      color: var(--brass);
+      letter-spacing: 3px;
+      position: relative;
+      z-index: 1;
+    }
+    .card-img::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.45) 100%);
+    }
+    .roll-indicator {
+      position: absolute;
+      bottom: 8px; right: 10px;
+      background: rgba(20,18,16,0.85);
+      border: 1px solid var(--divider);
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--brass);
+      z-index: 2;
+    }
+
+    .card-info { padding: 10px 12px 12px; }
+    .card-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .card-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3A3530, #2A2520);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--brass);
+      flex-shrink: 0;
+    }
+    .card-username {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--paper);
+      font-family: 'Inter', sans-serif;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: var(--paper);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .card-tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .card-tag {
+      background: rgba(201,169,110,0.08);
+      color: var(--brass);
+      border: 1px solid rgba(201,169,110,0.18);
+      border-radius: 2px;
+      padding: 1px 7px;
+      font-size: 10px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+    }
+    .card-meta {
+      font-size: 11px;
+      color: var(--text-light);
+      margin-bottom: 10px;
+      font-family: 'Inter', sans-serif;
+    }
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .card-action {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-light);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+    }
+    .card-action.liked { color: var(--kodak); }
+    .card-action-icon {
+      width: 18px; height: 18px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    /* ─── Tab Bar ─── */
+    .tab-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: rgba(20,18,16,0.96);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 200;
+      padding-bottom: 4px;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--text-light);
+      font-size: 9px;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      padding: 4px 0;
+      transition: color 0.2s;
+    }
+    .tab-item.active { color: var(--brass); }
+    .tab-icon {
+      width: 24px; height: 24px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    /* ══════════════════════════════
+       PUBLISH SCREEN
+    ══════════════════════════════ */
+
+    .publish-header {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--divider);
+      margin: 0 -16px;
+      padding: 0 16px;
+    }
+    .publish-header-btn {
+      font-size: 14px;
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      padding: 6px 0;
+    }
+    .publish-header-btn.primary {
+      color: var(--brass);
+      font-weight: 600;
+    }
+    .publish-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--paper);
+    }
+
+    .photo-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin: 14px 0 4px;
+    }
+    .photo-add-btn {
+      aspect-ratio: 1;
+      background: rgba(30,27,23,0.6);
+      border: 1.5px dashed var(--divider);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .photo-add-btn-icon {
+      width: 28px; height: 28px;
+      stroke: var(--text-light);
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .photo-add-btn-text {
+      font-size: 10px;
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+    }
+    .photo-thumb {
+      aspect-ratio: 1;
+      background: linear-gradient(160deg, #252017, #1A1510);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: rgba(201,169,110,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .photo-thumb::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%);
+    }
+    .photo-thumb .roll-num {
+      position: absolute;
+      bottom: 4px;
+      right: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      color: rgba(201,169,110,0.4);
+      font-weight: 600;
+      z-index: 2;
+    }
+    .photo-thumb .remove-btn {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 18px; height: 18px;
+      background: rgba(20,18,16,0.9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      cursor: pointer;
+    }
+    .remove-btn-icon {
+      width: 10px; height: 10px;
+      stroke: var(--text-light);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .roll-counter {
+      text-align: center;
+      padding: 8px 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: var(--text-light);
+    }
+    .roll-counter span { color: var(--brass); font-weight: 600; }
+
+    .publish-textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--divider);
+      color: var(--paper);
+      font-size: 14px;
+      font-family: 'Noto Sans SC', sans-serif;
+      padding: 10px 0;
+      resize: none;
+      outline: none;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .publish-textarea::placeholder { color: var(--text-light); }
+
+    .info-section { margin-bottom: 16px; }
+    .info-section-title {
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      color: var(--text-light);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .info-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--divider);
+    }
+    .info-required { color: var(--kodak); }
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(58,53,48,0.5);
+      gap: 12px;
+    }
+    .info-label {
+      font-size: 12px;
+      color: var(--text-light);
+      width: 64px;
+      flex-shrink: 0;
+      padding-top: 5px;
+    }
+    .info-value {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .info-chip {
+      padding: 4px 10px;
+      background: rgba(201,169,110,0.08);
+      border: 1px solid rgba(201,169,110,0.2);
+      border-radius: 3px;
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      color: var(--brass);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .info-chip.selected {
+      background: rgba(201,169,110,0.2);
+      border-color: var(--brass);
+    }
+    .info-chip.placeholder {
+      color: var(--text-light);
+      border-color: var(--divider);
+      background: transparent;
+    }
+
+    .topic-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .topic-chip {
+      padding: 5px 12px;
+      border: 1px solid var(--divider);
+      border-radius: 3px;
+      font-size: 12px;
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .topic-chip.selected {
+      border-color: var(--brass);
+      color: var(--brass);
+      background: rgba(201,169,110,0.08);
+    }
+
+    .publish-footer {
+      position: absolute;
+      bottom: 60px; /* above tab bar */
+      left: 0; right: 0;
+      padding: 12px 16px;
+      background: rgba(20,18,16,0.98);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--divider);
+    }
+    .publish-btn {
+      width: 100%;
+      height: 44px;
+      background: linear-gradient(180deg, #D4B578 0%, #C9A96E 50%, #B8944F 100%);
+      color: #1A1208;
+      border: none;
+      border-radius: 3px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Noto Sans SC', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 2px 12px rgba(201,169,110,0.25);
+    }
+    .publish-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ─── Shop Card ─── */
+    .shop-card {
+      background: var(--card);
+      border-radius: 3px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    /* ─── Menu Item ─── */
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(58,53,48,0.5);
+      cursor: pointer;
+    }
+
+    /* ══════════════════════════════
+       DETAIL SCREEN
+    ══════════════════════════════ */
+
+    .detail-header {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 2px;
+      border-bottom: 1px solid var(--divider);
+      gap: 12px;
+      margin: 0 -16px;
+      padding: 0 16px;
+    }
+    .back-btn {
+      width: 32px; height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .back-btn svg {
+      width: 22px; height: 22px;
+      stroke: var(--paper);
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .detail-username {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--paper);
+      flex: 1;
+    }
+    .detail-more svg {
+      width: 22px; height: 22px;
+      stroke: var(--paper);
+      stroke-width: 1.5;
+      fill: none;
+      cursor: pointer;
+    }
+
+    .detail-main-photo {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: linear-gradient(160deg, #252017, #1A1510);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .detail-main-photo::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%);
+    }
+    .detail-photo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      opacity: 0.1;
+      color: var(--brass);
+      font-weight: 700;
+      letter-spacing: 4px;
+      position: relative;
+      z-index: 1;
+    }
+    .detail-frame-num {
+      position: absolute;
+      bottom: 10px; right: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: rgba(201,169,110,0.3);
+      font-weight: 600;
+      z-index: 2;
+    }
+
+    .detail-thumb-strip {
+      display: flex;
+      gap: 4px;
+      padding: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: #161310;
+      border-bottom: 1px solid var(--divider);
+    }
+    .detail-thumb-strip::-webkit-scrollbar { display: none; }
+    .detail-thumb {
+      width: 48px; height: 48px;
+      flex-shrink: 0;
+      background: linear-gradient(160deg, #252017, #1A1510);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 10px;
+      color: rgba(201,169,110,0.15);
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: border-color 0.15s;
+      position: relative;
+    }
+    .detail-thumb.active { border-color: var(--brass); }
+    .detail-thumb .thumb-num {
+      position: absolute;
+      bottom: 2px; right: 3px;
+      font-size: 8px;
+      color: rgba(201,169,110,0.3);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .detail-info { padding: 14px 14px 100px; }
+    .detail-user-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .detail-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3A3530, #2A2520);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brass);
+    }
+    .detail-user-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--paper);
+    }
+    .detail-user-sub {
+      font-size: 11px;
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+    }
+    .detail-follow-btn {
+      margin-left: auto;
+      padding: 5px 14px;
+      background: var(--brass);
+      color: #1A1208;
+      border: none;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+    }
+
+    .detail-desc {
+      font-size: 14px;
+      color: var(--paper);
+      line-height: 1.75;
+      margin-bottom: 14px;
+    }
+    .detail-film-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .detail-film-tag {
+      background: rgba(201,169,110,0.08);
+      color: var(--brass);
+      border: 1px solid rgba(201,169,110,0.2);
+      border-radius: 2px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+    }
+    .detail-meta {
+      font-size: 11px;
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+      margin-bottom: 14px;
+    }
+
+    .detail-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 12px 0;
+      border-top: 1px solid var(--divider);
+      border-bottom: 1px solid var(--divider);
+    }
+    .detail-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-light);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+    }
+    .detail-action.liked { color: var(--kodak); }
+    .detail-action svg {
+      width: 22px; height: 22px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+      cursor: pointer;
+    }
+
+    .comments-title {
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      color: var(--text-light);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 14px 0 10px;
+    }
+    .comment-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .comment-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3A3530, #2A2520);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--brass);
+      flex-shrink: 0;
+    }
+    .comment-body { flex: 1; }
+    .comment-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--paper);
+      font-family: 'Inter', sans-serif;
+      margin-bottom: 3px;
+    }
+    .comment-text {
+      font-size: 13px;
+      color: var(--paper);
+      line-height: 1.6;
+      margin-bottom: 4px;
+    }
+    .comment-time {
+      font-size: 10px;
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Comment input — fixed at bottom of detail */
+    .comment-input-area {
+      position: absolute;
+      bottom: 60px; /* above tab bar */
+      left: 0; right: 0;
+      padding: 10px 14px;
+      background: rgba(20,18,16,0.96);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--divider);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .comment-input {
+      flex: 1;
+      background: rgba(30,27,23,0.8);
+      border: 1px solid var(--divider);
+      border-radius: 20px;
+      color: var(--paper);
+      padding: 8px 16px;
+      font-size: 13px;
+      font-family: 'Noto Sans SC', sans-serif;
+      outline: none;
+    }
+    .comment-input::placeholder { color: var(--text-light); }
+    .comment-send {
+      width: 32px; height: 32px;
+      background: var(--brass);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .comment-send svg {
+      width: 16px; height: 16px;
+      stroke: #1A1208;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* ─── Photo Modal ─── */
+    .photo-modal {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(10,8,6,0.97);
+      z-index: 400;
+      flex-direction: column;
+    }
+    .photo-modal.active { display: flex; }
+    .modal-header {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--divider);
+      flex-shrink: 0;
+    }
+    .modal-close {
+      width: 32px; height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .modal-close svg {
+      width: 22px; height: 22px;
+      stroke: var(--paper);
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .modal-photo-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #0D0B09;
+    }
+    .modal-big-photo {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: linear-gradient(160deg, #252017, #1A1510);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .modal-big-photo::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%);
+    }
+    .modal-photo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      opacity: 0.1;
+      color: var(--brass);
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
+    }
+    .modal-comment-input {
+      flex-shrink: 0;
+      padding: 10px 14px 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(20,18,16,0.96);
+      border-top: 1px solid var(--divider);
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .screen { animation: fadeIn 0.2s ease; }
+
+  </style>
+</head>
+<body>
+
+<div class="phone-device">
+
+  <!-- ─── Scrollable Screen ─── -->
+  <div class="phone-screen">
+
+    <!-- ═══ SCREEN 1: HOME / FEED ═══ -->
+    <div class="screen active" id="screen-home">
+
+      <div class="header">
+        <div class="logo">FILMER<sup>®</sup></div>
+        <div class="header-icons">
+          <svg class="header-icon" viewBox="0 0 24 24" style="cursor:pointer;" onclick="showScreen('screen-messages')"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <svg class="header-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+      </div>
+
+      <div class="home-banner">
+        <div class="banner-text">Every Roll is Limited</div>
+        <div class="banner-sub">FILM NEVER DIES</div>
+      </div>
+
+      <div class="sort-tabs">
+        <div class="sort-tab active" onclick="setSort(this)">热门</div>
+        <div class="sort-tab" onclick="setSort(this)">最新</div>
+        <div class="sort-tab" onclick="setSort(this)">关注</div>
+      </div>
+
+      <div class="topic-scroll">
+        <div class="topic-tag active"># 今日冲洗</div>
+        <div class="topic-tag"># 我的第一卷</div>
+        <div class="topic-tag"># 反转片挑战</div>
+        <div class="topic-tag"># 哈苏收藏</div>
+        <div class="topic-tag"># 黑白肖像</div>
+        <div class="topic-tag"># 城市街拍</div>
+      </div>
+
+      <div class="feed">
+        <div class="feed-card" onclick="showScreen('screen-detail')">
+          <div class="card-img" style="aspect-ratio: 3/4;">
+            <span class="card-img-text">PORTRA</span>
+            <div class="roll-indicator">+11</div>
+          </div>
+          <div class="card-info">
+            <div class="card-user">
+              <div class="card-avatar">李</div>
+              <div class="card-username">李在在</div>
+            </div>
+            <div class="card-desc">周末去了趟西湖，Portra 400 拍人真心绝。阳光下的肤色太舒服了。</div>
+            <div class="card-tags">
+              <span class="card-tag">Kodak Portra 400</span>
+              <span class="card-tag">135 · C-41</span>
+            </div>
+            <div class="card-meta">徕卡 M6 · 映画馆冲扫</div>
+            <div class="card-actions">
+              <div class="card-action liked">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                1.2k
+              </div>
+              <div class="card-action">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                89
+              </div>
+              <div class="card-action">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feed-card" onclick="showScreen('screen-detail')">
+          <div class="card-img" style="aspect-ratio: 4/3;">
+            <span class="card-img-text">VELVIA</span>
+          </div>
+          <div class="card-info">
+            <div class="card-user">
+              <div class="card-avatar">张</div>
+              <div class="card-username">张慢快门</div>
+            </div>
+            <div class="card-desc">反转片的色彩真的太毒了，Velvia 50 拍建筑，颜色像油画一样。</div>
+            <div class="card-tags">
+              <span class="card-tag">Fuji Velvia 50</span>
+              <span class="card-tag">120 · 6×6</span>
+              <span class="card-tag">E-6</span>
+            </div>
+            <div class="card-meta">哈苏 500CM · 上海胶片时代</div>
+            <div class="card-actions">
+              <div class="card-action">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                876
+              </div>
+              <div class="card-action">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                45
+              </div>
+              <div class="card-action">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feed-card" onclick="showScreen('screen-detail')">
+          <div class="card-img" style="aspect-ratio: 16/9;">
+            <span class="card-img-text">HP5</span>
+            <div class="roll-indicator">+35</div>
+          </div>
+          <div class="card-info">
+            <div class="card-user">
+              <div class="card-avatar">王</div>
+              <div class="card-username">王胶片</div>
+            </div>
+            <div class="card-desc">人生第一卷黑白，迫冲到 1600 拍夜上海。颗粒感满满，太喜欢了。</div>
+            <div class="card-tags">
+              <span class="card-tag">Ilford HP5 Plus</span>
+              <span class="card-tag">135</span>
+              <span class="card-tag">迫冲 1600</span>
+            </div>
+            <div class="card-meta">Contax T2 · 自冲</div>
+            <div class="card-actions">
+              <div class="card-action">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                432
+              </div>
+              <div class="card-action">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                23
+              </div>
+              <div class="card-action">
+                <svg class="card-action-icon" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN 2: PUBLISH ═══ -->
+    <div class="screen" id="screen-publish">
+      <div class="publish-header">
+        <div class="publish-header-btn" onclick="showScreen('screen-home')">取消</div>
+        <div class="publish-title">发布一卷</div>
+        <div class="publish-header-btn primary" id="publish-btn" onclick="publish()">发布</div>
+      </div>
+
+      <div class="photo-selector" id="photo-selector">
+        <div class="photo-add-btn" onclick="addPhoto()">
+          <svg class="photo-add-btn-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <div class="photo-add-btn-text">添加照片</div>
+        </div>
+      </div>
+
+      <div class="roll-counter">已选 <span id="photo-count">0</span> 张 / 最多 36 张</div>
+
+      <textarea class="publish-textarea" rows="3" placeholder="写下这卷的故事..." id="publish-desc"></textarea>
+
+      <div class="info-section">
+        <div class="info-section-title">胶片信息卡 <span class="info-required">*</span></div>
+        <div class="info-row">
+          <div class="info-label">相机</div>
+          <div class="info-value">
+            <div class="info-chip placeholder" onclick="selectChip(this)">选择相机</div>
+            <div class="info-chip" onclick="selectChip(this)">宾得67</div>
+            <div class="info-chip" onclick="selectChip(this)">徕卡 M6</div>
+            <div class="info-chip" onclick="selectChip(this)">哈苏 500CM</div>
+            <div class="info-chip" onclick="selectChip(this)">Contax T2</div>
+            <div class="info-chip" onclick="selectChip(this)">富士 Klasse</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">画幅</div>
+          <div class="info-value">
+            <div class="info-chip" onclick="selectChip(this)">135 全画幅</div>
+            <div class="info-chip" onclick="selectChip(this)">120 6×6</div>
+            <div class="info-chip" onclick="selectChip(this)">120 6×7</div>
+            <div class="info-chip" onclick="selectChip(this)">4×5 大画幅</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">胶卷型号</div>
+          <div class="info-value">
+            <div class="info-chip placeholder" onclick="selectChip(this)">选择胶卷</div>
+            <div class="info-chip" onclick="selectChip(this)">Kodak E100</div>
+            <div class="info-chip" onclick="selectChip(this)">Portra 400</div>
+            <div class="info-chip" onclick="selectChip(this)">Velvia 50</div>
+            <div class="info-chip" onclick="selectChip(this)">HP5 Plus</div>
+            <div class="info-chip" onclick="selectChip(this)">Ektar 100</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">冲洗工艺</div>
+          <div class="info-value">
+            <div class="info-chip" onclick="selectChip(this)">C-41</div>
+            <div class="info-chip" onclick="selectChip(this)">E-6</div>
+            <div class="info-chip" onclick="selectChip(this)">D-76 黑白</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">冲扫店</div>
+          <div class="info-value">
+            <div class="info-chip placeholder" onclick="selectChip(this)">选填</div>
+            <div class="info-chip" onclick="selectChip(this)">映画馆</div>
+            <div class="info-chip" onclick="selectChip(this)">胶片时代</div>
+            <div class="info-chip" onclick="selectChip(this)">大熊座</div>
+            <div class="info-chip" onclick="selectChip(this)">自冲</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">话题标签</div>
+        <div class="topic-selector">
+          <div class="topic-chip" onclick="selectTopic(this)"># 今日冲洗</div>
+          <div class="topic-chip" onclick="selectTopic(this)"># 我的第一卷</div>
+          <div class="topic-chip" onclick="selectTopic(this)"># 反转片挑战</div>
+          <div class="topic-chip" onclick="selectTopic(this)"># 哈苏收藏</div>
+          <div class="topic-chip" onclick="selectTopic(this)"># 黑白肖像</div>
+          <div class="topic-chip" onclick="selectTopic(this)"># 城市街拍</div>
+        </div>
+      </div>
+
+      <div class="publish-footer" style="position:relative; bottom:auto; padding: 12px 16px 20px; margin-top: 16px;">
+        <button class="publish-btn" id="publish-btn-main" onclick="publish()" disabled>发布</button>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN 3: DETAIL ═══ -->
+    <div class="screen" id="screen-detail">
+      <div class="detail-header">
+        <div class="back-btn" onclick="showScreen('screen-home')">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </div>
+        <div class="detail-username">李在在</div>
+        <div class="detail-more">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </div>
+      </div>
+
+      <div class="detail-main-photo">
+        <span class="detail-photo-text">PORTRA</span>
+        <div class="detail-frame-num">#01 / 12</div>
+      </div>
+
+      <div class="detail-thumb-strip">
+        <div class="detail-thumb active" onclick="switchThumb(this)"><span class="thumb-num">#01</span></div>
+        <div class="detail-thumb" onclick="switchThumb(this)"><span class="thumb-num">#02</span></div>
+        <div class="detail-thumb" onclick="switchThumb(this)"><span class="thumb-num">#03</span></div>
+        <div class="detail-thumb" onclick="switchThumb(this)"><span class="thumb-num">#04</span></div>
+        <div class="detail-thumb" onclick="switchThumb(this)"><span class="thumb-num">#05</span></div>
+        <div class="detail-thumb" onclick="openPhotoModal()"><span class="thumb-num">+7</span></div>
+      </div>
+
+      <div class="detail-info">
+        <div class="detail-user-row">
+          <div class="detail-avatar">李</div>
+          <div>
+            <div class="detail-user-name">李在在</div>
+            <div class="detail-user-sub">2小时前 · 124粉丝</div>
+          </div>
+          <button class="detail-follow-btn">关注</button>
+        </div>
+
+        <div class="detail-desc">周末去了趟西湖，Portra 400 拍人真心绝。阳光下的肤色太舒服了。这卷是上个月在画英雄买的，冲出来效果超出预期。</div>
+
+        <div class="detail-film-tags">
+          <span class="detail-film-tag">Kodak Portra 400</span>
+          <span class="detail-film-tag">135 全画幅</span>
+          <span class="detail-film-tag">C-41</span>
+        </div>
+        <div class="detail-meta">徕卡 M6 · 映画馆冲扫 · ISO 400 · f/2.8 · 1/250s</div>
+
+        <div class="detail-actions">
+          <div class="detail-action liked">
+            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            1.2k
+          </div>
+          <div class="detail-action">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            89
+          </div>
+          <div class="detail-action">
+            <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            收藏
+          </div>
+          <div class="detail-action">
+            <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            分享
+          </div>
+        </div>
+
+        <div class="comments-title">— 评论 (89) —</div>
+
+        <div class="comment-item">
+          <div class="comment-avatar">张</div>
+          <div class="comment-body">
+            <div class="comment-name">张慢快门</div>
+            <div class="comment-text">Portra 400 拍人像真的绝了，肤色太舒服了。用的是诺日士还是哈苏X5扫的？</div>
+            <div class="comment-time">1小时前 · 12赞</div>
+          </div>
+        </div>
+        <div class="comment-item">
+          <div class="comment-avatar">王</div>
+          <div class="comment-body">
+            <div class="comment-name">王胶片</div>
+            <div class="comment-text">徕卡配 Portra 400 是经典组合。这卷在哪里买的，最近想囤一点。</div>
+            <div class="comment-time">45分钟前 · 8赞</div>
+          </div>
+        </div>
+        <div class="comment-item">
+          <div class="comment-avatar">阿</div>
+          <div class="comment-body">
+            <div class="comment-name">阿兰德龙</div>
+            <div class="comment-text">西湖真美！想问一下冲扫价格多少？</div>
+            <div class="comment-time">20分钟前 · 3赞</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comment input at bottom -->
+      <div class="comment-input-area">
+        <input class="comment-input" placeholder="写下你的评论..." type="text">
+        <div class="comment-send">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN 4: SHOP ═══ -->
+    <div class="screen" id="screen-shop">
+      <div class="header">
+        <div class="logo" style="font-size:16px;">FILMER<sup>®</sup></div>
+        <div style="font-size:12px; color:var(--text-light); font-family:'Inter',sans-serif;">胶卷·周边·器材</div>
+        <div class="header-icons">
+          <svg class="header-icon" viewBox="0 0 24 24" style="cursor:pointer;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+      </div>
+
+      <!-- Category tabs -->
+      <div style="display:flex; gap:0; border-bottom:1px solid var(--divider); margin:0 -16px; padding:0 16px;">
+        <div style="padding:10px 14px; font-size:13px; font-family:'Inter',sans-serif; color:var(--brass); border-bottom:2px solid var(--brass); cursor:pointer;">胶卷</div>
+        <div style="padding:10px 14px; font-size:13px; font-family:'Inter',sans-serif; color:var(--text-light); cursor:pointer;">反转片</div>
+        <div style="padding:10px 14px; font-size:13px; font-family:'Inter',sans-serif; color:var(--text-light); cursor:pointer;">冲扫套药</div>
+        <div style="padding:10px 14px; font-size:13px; font-family:'Inter',sans-serif; color:var(--text-light); cursor:pointer;">周边器材</div>
+      </div>
+
+      <!-- Product grid -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 0 80px;">
+        <div class="shop-card">
+          <div style="aspect-ratio:1; background:linear-gradient(160deg,#252017,#1A1510); border-radius:3px; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+            <span style="font-family:'Playfair Display',serif; font-size:14px; color:rgba(201,169,110,0.2);">PORTRA</span>
+          </div>
+          <div style="font-size:12px; color:var(--paper); font-family:'Inter',sans-serif; margin-bottom:3px;">Kodak Portra 400</div>
+          <div style="font-size:11px; color:var(--text-light); font-family:'Inter',sans-serif; margin-bottom:6px;">135 · 36张</div>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:14px; color:var(--brass); font-weight:600; font-family:'Inter',sans-serif;">¥65</span>
+            <span style="font-size:10px; color:var(--text-light); text-decoration:line-through; font-family:'Inter',sans-serif;">¥75</span>
+          </div>
+        </div>
+        <div class="shop-card">
+          <div style="aspect-ratio:1; background:linear-gradient(160deg,#252017,#1A1510); border-radius:3px; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+            <span style="font-family:'Playfair Display',serif; font-size:14px; color:rgba(201,169,110,0.2);">VELVIA</span>
+          </div>
+          <div style="font-size:12px; color:var(--paper); font-family:'Inter',sans-serif; margin-bottom:3px;">Fuji Velvia 50</div>
+          <div style="font-size:11px; color:var(--text-light); font-family:'Inter',sans-serif; margin-bottom:6px;">120反转片</div>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:14px; color:var(--brass); font-weight:600; font-family:'Inter',sans-serif;">¥98</span>
+            <span style="font-size:10px; color:var(--text-light); font-family:'Inter',sans-serif;">有货</span>
+          </div>
+        </div>
+        <div class="shop-card">
+          <div style="aspect-ratio:1; background:linear-gradient(160deg,#252017,#1A1510); border-radius:3px; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+            <span style="font-family:'Playfair Display',serif; font-size:14px; color:rgba(201,169,110,0.2);">D-76</span>
+          </div>
+          <div style="font-size:12px; color:var(--paper); font-family:'Inter',sans-serif; margin-bottom:3px;">Kodak D-76 显影液</div>
+          <div style="font-size:11px; color:var(--text-light); font-family:'Inter',sans-serif; margin-bottom:6px;">粉末套装</div>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:14px; color:var(--brass); font-weight:600; font-family:'Inter',sans-serif;">¥38</span>
+          </div>
+        </div>
+        <div class="shop-card">
+          <div style="aspect-ratio:1; background:linear-gradient(160deg,#252017,#1A1510); border-radius:3px; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+            <span style="font-family:'Playfair Display',serif; font-size:14px; color:rgba(201,169,110,0.2);">暗袋</span>
+          </div>
+          <div style="font-size:12px; color:var(--paper); font-family:'Inter',sans-serif; margin-bottom:3px;">60×60cm 导入暗袋</div>
+          <div style="font-size:11px; color:var(--text-light); font-family:'Inter',sans-serif; margin-bottom:6px;">装胶卷用</div>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:14px; color:var(--brass); font-weight:600; font-family:'Inter',sans-serif;">¥28</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN 5: MESSAGES ═══ -->
+    <div class="screen" id="screen-messages">
+      <div class="header" style="justify-content:center;">
+        <div class="logo">FILMER<sup>®</sup></div>
+      </div>
+
+      <div style="padding: 30px 0; text-align:center; color:var(--text-light); font-size:13px; font-family:'Inter',sans-serif;">
+        <div style="font-size:40px; margin-bottom:12px; opacity:0.3;">💬</div>
+        <div>暂无消息</div>
+        <div style="font-size:11px; margin-top:6px; color:var(--text-light); opacity:0.6;">互动消息和私信将在这里显示</div>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN 6: MINE ═══ -->
+    <div class="screen" id="screen-mine">
+      <div style="height:52px; display:flex; align-items:center; justify-content:flex-end; gap:14px; padding:0 16px; border-bottom:1px solid var(--divider); margin:0 -16px;">
+        <svg style="width:22px;height:22px;stroke:var(--paper);stroke-width:1.5;fill:none;cursor:pointer;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        <svg style="width:22px;height:22px;stroke:var(--paper);stroke-width:1.5;fill:none;cursor:pointer;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </div>
+
+      <!-- User profile -->
+      <div style="display:flex; align-items:center; gap:14px; padding:20px 16px 16px;">
+        <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#3A3530,#2A2520);display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:20px;font-weight:600;color:var(--brass);">李</div>
+        <div>
+          <div style="font-size:18px;font-weight:500;color:var(--paper); font-family:'Noto Sans SC',sans-serif; margin-bottom:4px;">李在在</div>
+          <div style="font-size:12px;color:var(--text-light);font-family:'Inter',sans-serif;">ID: 1002837 · 银会员</div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div style="display:flex; justify-content:space-around; padding:0 16px 16px; border-bottom:1px solid var(--divider);">
+        <div style="text-align:center;">
+          <div style="font-size:18px;font-weight:600;color:var(--paper);font-family:'Inter',sans-serif;">124</div>
+          <div style="font-size:11px;color:var(--text-light);font-family:'Inter',sans-serif;">关注</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:18px;font-weight:600;color:var(--paper);font-family:'Inter',sans-serif;">2.3k</div>
+          <div style="font-size:11px;color:var(--text-light);font-family:'Inter',sans-serif;">粉丝</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:18px;font-weight:600;color:var(--paper);font-family:'Inter',sans-serif;">8</div>
+          <div style="font-size:11px;color:var(--text-light);font-family:'Inter',sans-serif;">发帖</div>
+        </div>
+      </div>
+
+      <!-- Menu items -->
+      <div style="padding: 8px 16px 100px;">
+        <div class="menu-item" onclick="showScreen('screen-shop')">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg style="width:20px;height:20px;stroke:var(--brass);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span style="font-size:14px;color:var(--paper);">我的订单</span>
+          </div>
+          <svg style="width:16px;height:16px;stroke:var(--text-light);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="menu-item">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg style="width:20px;height:20px;stroke:var(--brass);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <span style="font-size:14px;color:var(--paper);">我的收藏</span>
+          </div>
+          <svg style="width:16px;height:16px;stroke:var(--text-light);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="menu-item">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg style="width:20px;height:20px;stroke:var(--brass);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            <span style="font-size:14px;color:var(--paper);">我的租赁</span>
+          </div>
+          <svg style="width:16px;height:16px;stroke:var(--text-light);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="menu-item">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg style="width:20px;height:20px;stroke:var(--brass);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span style="font-size:14px;color:var(--paper);">我的胶卷</span>
+          </div>
+          <svg style="width:16px;height:16px;stroke:var(--text-light);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div style="height:1px;background:var(--divider);margin:8px 0;"></div>
+        <div class="menu-item">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg style="width:20px;height:20px;stroke:var(--brass);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 12v6m-9-9h6m6 0h6"/></svg>
+            <span style="font-size:14px;color:var(--paper);">会员中心</span>
+          </div>
+          <svg style="width:16px;height:16px;stroke:var(--text-light);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="menu-item">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg style="width:20px;height:20px;stroke:var(--brass);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style="font-size:14px;color:var(--paper);">帮助与反馈</span>
+          </div>
+          <svg style="width:16px;height:16px;stroke:var(--text-light);stroke-width:1.5;fill:none;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Photo Modal ─── -->
+    <div class="photo-modal" id="photo-modal">
+      <div class="modal-header">
+        <div class="modal-close" onclick="closePhotoModal()">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+      <div class="modal-photo-area">
+        <div class="modal-big-photo">
+          <span class="modal-photo-text">PORTRA</span>
+        </div>
+      </div>
+      <div class="modal-comment-input">
+        <input class="comment-input" placeholder="评论这张照片..." type="text">
+        <div class="comment-send">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Tab Bar ─── -->
+    <div class="tab-bar">
+      <div class="tab-item active" onclick="showScreen('screen-home')">
+        <svg class="tab-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>发现</span>
+      </div>
+      <div class="tab-item" onclick="showScreen('screen-shop')">
+        <svg class="tab-icon" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>商城</span>
+      </div>
+      <div class="tab-item" onclick="showScreen('screen-messages')">
+        <svg class="tab-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>消息</span>
+      </div>
+      <div class="tab-item" onclick="showScreen('screen-mine')">
+        <svg class="tab-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>我的</span>
+      </div>
+    </div>
+
+  </div>
+  <!-- end .phone-screen -->
+
+  <!-- FAB: 发布（固定在手机右下角） -->
+  <div style="position:absolute; bottom:76px; right:20px; z-index:250; cursor:pointer;" onclick="showScreen('screen-publish')">
+    <div style="width:54px;height:54px;background:linear-gradient(180deg,#D4B578,#C9A96E);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(201,169,110,0.35);">
+      <svg style="width:26px;height:26px;stroke:#1A1208;stroke-width:2;fill:none;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+  </div>
+
+</div>
+<!-- end .phone-device -->
+
+<script>
+  // ── Navigation ──
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelector('.phone-screen').scrollTop = 0;
+    // Update tab bar active state
+    const tabMap = { 'screen-home': 0, 'screen-shop': 1, 'screen-messages': 2, 'screen-mine': 3 };
+    document.querySelectorAll('.tab-item').forEach((t, i) => {
+      t.classList.toggle('active', i === (tabMap[id] ?? -1));
+    });
+  }
+
+  // ── Sort tabs ──
+  function setSort(el) {
+    el.parentElement.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Photo selector ──
+  let photoCount = 0;
+  const maxPhotos = 36;
+
+  function addPhoto() {
+    if (photoCount >= maxPhotos) return;
+    photoCount++;
+    const selector = document.getElementById('photo-selector');
+    const addBtn = selector.querySelector('.photo-add-btn');
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    thumb.innerHTML = `
+      <span class="roll-num">#${String(photoCount).padStart(2,'0')}</span>
+      <div class="remove-btn" onclick="removePhoto(this,event)">
+        <svg class="remove-btn-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>`;
+    selector.insertBefore(thumb, addBtn);
+    updateCount();
+  }
+
+  function removePhoto(btn, e) {
+    e.stopPropagation();
+    btn.parentElement.remove();
+    photoCount--;
+    updateCount();
+  }
+
+  function updateCount() {
+    document.getElementById('photo-count').textContent = photoCount;
+    document.getElementById('publish-btn-main').disabled = photoCount === 0;
+  }
+
+  // ── Chip selector ──
+  function selectChip(el) {
+    if (el.classList.contains('placeholder')) {
+      el.classList.remove('placeholder');
+    }
+    el.parentElement.querySelectorAll('.info-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // ── Topic ──
+  function selectTopic(el) { el.classList.toggle('selected'); }
+
+  // ── Publish ──
+  function publish() {
+    if (photoCount === 0) return;
+    alert('发布成功！🎞️');
+    photoCount = 0;
+    document.getElementById('photo-selector').querySelectorAll('.photo-thumb').forEach(t => t.remove());
+    updateCount();
+    showScreen('screen-home');
+  }
+
+  // ── Detail thumbs ──
+  function switchThumb(el) {
+    document.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Photo modal ──
+  function openPhotoModal() { document.getElementById('photo-modal').classList.add('active'); }
+  function closePhotoModal() { document.getElementById('photo-modal').classList.remove('active'); }
+
+  // ── Demo pre-load: 宾得67 + E100反转片（真实数据） ──
+  window.addEventListener('DOMContentLoaded', () => {
+    // 预填8张照片（宾得67 E100实际张数）
+    [1,2,3,4,5,6,7,8].forEach(n => addPhoto());
+    // 自动填写真实胶片信息
+    const chipRows = document.querySelectorAll('#screen-publish .info-row');
+    // 第1行: 相机 → 宾得67
+    const camChips = chipRows[0].querySelectorAll('.info-chip');
+    camChips.forEach(c => { c.classList.remove('selected'); if(c.textContent.includes('宾得67')) c.classList.add('selected'); });
+    // 第2行: 画幅 → 120 6×7
+    const fmtChips = chipRows[1].querySelectorAll('.info-chip');
+    fmtChips.forEach(c => { c.classList.remove('selected'); if(c.textContent.includes('6×7')) c.classList.add('selected'); });
+    // 第3行: 胶卷 → Kodak E100
+    const filmChips = chipRows[2].querySelectorAll('.info-chip');
+    filmChips.forEach(c => { c.classList.remove('selected'); if(c.textContent.includes('E100')) c.classList.add('selected'); });
+    // 第4行: 冲洗工艺 → E-6
+    const procChips = chipRows[3].querySelectorAll('.info-chip');
+    procChips.forEach(c => { c.classList.remove('selected'); if(c.textContent.trim() === 'E-6') c.classList.add('selected'); });
+    // 更新发布按钮状态
+    updateCount();
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "name": "filmer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Filmer · 胶片影像平台 · Phase 1 微信支付 MVP",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace=packages/server",
+    "dev:app": "npm run dev:weapp --workspace=packages/app",
+    "dev": "npm-run-all --parallel dev:server dev:app",
+    "build": "npm-run-all build:server build:app",
+    "build:server": "npm run build --workspace=packages/server",
+    "build:app": "npm run build:weapp --workspace=packages/app",
+    "typecheck": "npm-run-all typecheck:server typecheck:app",
+    "typecheck:server": "npm run typecheck --workspace=packages/server",
+    "typecheck:app": "npm run typecheck --workspace=packages/app",
+    "check": "npm-run-all typecheck test build",
+    "test": "npm test --workspace=packages/server",
+    "test:watch": "npm run test:watch --workspace=packages/server",
+    "prisma:migrate": "npm run prisma:migrate --workspace=packages/server",
+    "prisma:seed": "npm run prisma:seed --workspace=packages/server",
+    "lint": "npm run typecheck"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

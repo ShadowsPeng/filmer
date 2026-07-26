@@ -1,0 +1,26 @@
+{
+  "description": "Filmer · 微信小程序",
+  "packOptions": { "ignore": [], "include": [] },
+  "setting": {
+    "babelEnabled": true,
+    "es6": true,
+    "minified": true,
+    "postcss": true,
+    "newFeature": true,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "autoAudits": false,
+    "showShadowDomInWatermark": true,
+    "scopeDataCheck": false,
+    "uglifyFileNameIgnores": [],
+    "ignoreUploadUnusedFiles": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.4.0",
+  "appid": "touristappid",
+  "projectname": "filmer",
+  "condition": {},
+  "editorSetting": { "tabIndent": "insertSpaces", "tabSize": 2 }
+}

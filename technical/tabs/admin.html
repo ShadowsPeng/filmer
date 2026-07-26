@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filmer · Admin Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#141210;
+    --card:#1E1B17;
+    --paper:#EDE5D8;
+    --brass:#C9A96E;
+    --brass-light:#D4B578;
+    --brass-dark:#B8944F;
+    --kodak:#C25B2B;
+    --text-light:#9A9080;
+    --divider:#3A3530;
+    --bg-darker:#0D0B09;
+    --success:#6B8E5A;
+    --warning:#D4A14B;
+    --danger:#B85440;
+    --info:#5B7A9E;
+    --radius:3px;
+    --shadow:0 8px 32px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{background:#0a0807;font-family:'Inter','Noto Sans SC',-apple-system,sans-serif;color:var(--paper);height:100%;}
+  body{min-height:100vh;}
+  /* ========== Layout ========== */
+  .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
+  /* sidebar */
+  .sidebar{
+    background:var(--bg-darker);border-right:1px solid var(--divider);
+    padding:20px 0;position:relative;display:flex;flex-direction:column;
+  }
+  .sidebar::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--brass) 20%,var(--brass-light) 50%,var(--brass) 80%,transparent);
+  }
+  .brand{
+    padding:0 22px 20px;border-bottom:1px solid var(--divider);display:flex;align-items:center;gap:10px;
+  }
+  .brand .logo{
+    width:32px;height:32px;border-radius:var(--radius);
+    background:linear-gradient(135deg,var(--brass-light),var(--brass-dark));
+    color:var(--primary);font-family:'Playfair Display',serif;font-weight:700;
+    display:flex;align-items:center;justify-content:center;font-size:14px;
+  }
+  .brand .name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;}
+  .brand .sub{font-size:9px;color:var(--text-light);letter-spacing:2px;text-transform:uppercase;}
+  .nav-group{padding:14px 14px 0;flex:1;}
+  .nav-group .lbl{font-size:10px;color:var(--text-light);letter-spacing:2px;text-transform:uppercase;padding:6px 8px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:9px 10px;font-size:13px;
+    color:var(--text-light);cursor:pointer;border-radius:var(--radius);
+    transition:.15s;border:1px solid transparent;
+  }
+  .nav-item:hover{background:rgba(201,169,110,.06);color:var(--paper);}
+  .nav-item.active{
+    background:linear-gradient(90deg,rgba(201,169,110,.18),transparent);
+    color:var(--brass);border-color:rgba(201,169,110,.15);
+  }
+  .nav-item .badge{margin-left:auto;font-size:10px;background:var(--kodak);color:#fff;padding:1px 6px;border-radius:8px;}
+  .sidebar .footer{padding:14px;border-top:1px solid var(--divider);font-size:11px;color:var(--text-light);}
+  .sidebar .footer .user{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+  .sidebar .footer .avatar{
+    width:28px;height:28px;border-radius:50%;
+    background:linear-gradient(135deg,var(--brass),var(--brass-dark));
+    color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;
+  }
+  /* main */
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{
+    height:56px;background:var(--primary);border-bottom:1px solid var(--divider);
+    display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+  }
+  .topbar .crumbs{font-size:13px;color:var(--text-light);}
+  .topbar .crumbs b{color:var(--paper);font-weight:500;}
+  .topbar .right{display:flex;gap:14px;align-items:center;}
+  .topbar .search-mini{
+    display:flex;align-items:center;gap:6px;height:30px;padding:0 12px;
+    background:var(--card);border:1px solid var(--divider);border-radius:var(--radius);width:240px;
+  }
+  .topbar .search-mini input{flex:1;background:transparent;border:none;color:var(--paper);outline:none;font-size:12px;}
+  .topbar .search-mini input::placeholder{color:var(--text-light);}
+  .topbar .icon-btn{
+    width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+    color:var(--text-light);cursor:pointer;border-radius:var(--radius);
+  }
+  .topbar .icon-btn:hover{background:rgba(201,169,110,.08);color:var(--paper);}
+  /* content */
+  .content{padding:24px;flex:1;overflow-y:auto;}
+  .page{display:none;}
+  .page.active{display:block;}
+  .page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;}
+  .page-header .title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;}
+  .page-header .sub{font-size:12px;color:var(--text-light);margin-top:4px;}
+  /* buttons */
+  .btn{padding:8px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:.15s;display:inline-flex;align-items:center;gap:6px;}
+  .btn-brass{background:linear-gradient(135deg,var(--brass-light),var(--brass-dark));color:var(--primary);border-color:var(--brass-dark);}
+  .btn-brass:hover{box-shadow:0 4px 12px rgba(201,169,110,.3);}
+  .btn-ghost{background:transparent;border-color:var(--divider);color:var(--paper);}
+  .btn-ghost:hover{border-color:var(--brass);color:var(--brass);}
+  .btn-danger{background:rgba(184,84,64,.15);color:var(--danger);border-color:rgba(184,84,64,.3);}
+  .btn-sm{padding:5px 10px;font-size:11px;}
+  /* cards */
+  .card{
+    background:var(--card);border:1px solid var(--divider);border-radius:var(--radius);
+    box-shadow:0 2px 12px rgba(0,0,0,.2);
+  }
+  /* KPI tiles */
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .kpi{background:var(--card);border:1px solid var(--divider);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden;}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--brass),transparent);}
+  .kpi .lbl{font-size:11px;color:var(--text-light);letter-spacing:1.5px;text-transform:uppercase;}
+  .kpi .val{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;margin:6px 0 4px;color:var(--paper);}
+  .kpi .delta{font-size:11px;color:var(--success);}
+  .kpi .delta.down{color:var(--danger);}
+  /* charts */
+  .charts-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:18px;}
+  .chart-card{background:var(--card);border:1px solid var(--divider);border-radius:var(--radius);padding:18px;}
+  .chart-card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .chart-card .head .t{font-size:13px;font-weight:600;}
+  .chart-card .head .range{display:flex;gap:6px;}
+  .chart-card .head .range span{font-size:11px;padding:3px 8px;border-radius:2px;color:var(--text-light);cursor:pointer;}
+  .chart-card .head .range span.active{background:rgba(201,169,110,.12);color:var(--brass);}
+  /* table */
+  .table-wrap{background:var(--card);border:1px solid var(--divider);border-radius:var(--radius);overflow:hidden;}
+  .toolbar{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--divider);flex-wrap:wrap;}
+  .toolbar .filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .toolbar select{
+    background:var(--bg-darker);color:var(--paper);border:1px solid var(--divider);
+    padding:6px 10px;border-radius:var(--radius);font-size:11px;cursor:pointer;
+  }
+  .toolbar input{
+    background:var(--bg-darker);color:var(--paper);border:1px solid var(--divider);
+    padding:6px 10px;border-radius:var(--radius);font-size:11px;width:180px;
+  }
+  .toolbar input:focus{outline:none;border-color:var(--brass);}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;padding:10px 14px;background:rgba(0,0,0,.2);color:var(--text-light);font-weight:500;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--divider);}
+  td{padding:12px 14px;border-bottom:1px solid rgba(58,53,48,.4);color:var(--paper);}
+  tr:hover td{background:rgba(201,169,110,.04);}
+  tr:last-child td{border-bottom:none;}
+  td .sku{
+    display:inline-block;padding:1px 6px;background:rgba(201,169,110,.1);color:var(--brass);
+    font-family:'Playfair Display',serif;font-weight:700;font-size:11px;border-radius:2px;
+  }
+  /* status */
+  .status{
+    display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;
+    border-radius:10px;font-weight:500;
+  }
+  .status::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .status-paid{background:rgba(107,142,90,.15);color:var(--success);}
+  .status-pending{background:rgba(212,161,75,.15);color:var(--warning);}
+  .status-shipping{background:rgba(91,122,158,.18);color:var(--info);}
+  .status-done{background:rgba(201,169,110,.15);color:var(--brass);}
+  .status-cancel{background:rgba(184,84,64,.12);color:var(--danger);}
+  .status-active{background:rgba(107,142,90,.15);color:var(--success);}
+  .status-inactive{background:rgba(154,144,128,.15);color:var(--text-light);}
+  .status-cert{background:rgba(107,142,90,.15);color:var(--success);}
+  .status-uncert{background:rgba(154,144,128,.12);color:var(--text-light);}
+  /* product cell */
+  .prod-cell{display:flex;gap:10px;align-items:center;}
+  .prod-thumb{
+    width:36px;height:36px;border-radius:var(--radius);
+    background:linear-gradient(135deg,#3a2c1d,#1a1612);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--brass);font-family:'Playfair Display',serif;font-weight:700;font-size:12px;
+    flex-shrink:0;
+  }
+  .prod-cell .info .n{font-weight:500;font-size:12px;}
+  .prod-cell .info .s{font-size:10px;color:var(--text-light);margin-top:2px;}
+  /* action */
+  .row-actions{display:flex;gap:6px;}
+  .row-actions .a{padding:3px 8px;font-size:10px;border-radius:2px;cursor:pointer;color:var(--text-light);}
+  .row-actions .a:hover{color:var(--brass);}
+  .row-actions .a.del:hover{color:var(--danger);}
+  /* pagination */
+  .pagination{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--divider);font-size:11px;color:var(--text-light);}
+  .pagination .pg{display:flex;gap:4px;}
+  .pagination .pg span{padding:4px 10px;border:1px solid var(--divider);border-radius:2px;cursor:pointer;}
+  .pagination .pg span.active{background:var(--brass);color:var(--primary);border-color:var(--brass);}
+  /* modal */
+  .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);}
+  .modal-mask.show{display:flex;}
+  .modal{
+    background:var(--card);border:1px solid var(--divider);border-radius:var(--radius);
+    width:540px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow);
+    position:relative;
+  }
+  .modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--brass),transparent);}
+  .modal .head{padding:16px 20px;border-bottom:1px solid var(--divider);display:flex;justify-content:space-between;align-items:center;}
+  .modal .head .t{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;}
+  .modal .body{padding:20px;}
+  .modal .footer{padding:14px 20px;border-top:1px solid var(--divider);display:flex;justify-content:flex-end;gap:8px;}
+  /* form */
+  .form-row{margin-bottom:14px;}
+  .form-row .lbl{display:block;font-size:11px;color:var(--text-light);margin-bottom:5px;letter-spacing:1px;text-transform:uppercase;}
+  .form-row input,.form-row select,.form-row textarea{
+    width:100%;background:var(--bg-darker);color:var(--paper);border:1px solid var(--divider);
+    padding:8px 10px;border-radius:var(--radius);font-size:12px;font-family:inherit;
+  }
+  .form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:var(--brass);}
+  .form-row textarea{min-height:60px;resize:vertical;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  /* shop admin */
+  .shop-tile{
+    display:flex;gap:12px;align-items:center;padding:12px;background:var(--card);
+    border:1px solid var(--divider);border-radius:var(--radius);margin-bottom:10px;
+  }
+  .shop-tile .av{
+    width:42px;height:42px;border-radius:var(--radius);
+    background:linear-gradient(135deg,var(--brass),var(--brass-dark));
+    color:var(--primary);display:flex;align-items:center;justify-content:center;
+    font-family:'Playfair Display',serif;font-weight:700;
+  }
+  .shop-tile .info{flex:1;}
+  .shop-tile .info .n{font-weight:600;}
+  .shop-tile .info .s{font-size:11px;color:var(--text-light);margin-top:3px;}
+  /* timeline edit */
+  .timeline-edit{padding:0;}
+  .timeline-edit .item{
+    padding:12px 16px;border-bottom:1px dashed var(--divider);display:flex;justify-content:space-between;align-items:center;
+  }
+  .timeline-edit .item .l{display:flex;gap:10px;align-items:center;}
+  .timeline-edit .item .dot{width:8px;height:8px;border-radius:50%;background:var(--brass);}
+  .timeline-edit .item.pending .dot{background:var(--warning);}
+  /* switch */
+  .switch{position:relative;width:34px;height:18px;background:var(--divider);border-radius:10px;cursor:pointer;display:inline-block;}
+  .switch.on{background:var(--brass);}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.2s;}
+  .switch.on::after{left:18px;}
+  /* tag for tags */
+  .tag{display:inline-block;padding:2px 7px;font-size:10px;border-radius:2px;background:rgba(201,169,110,.1);color:var(--brass);margin-right:4px;}
+  /* SVG icons */
+  .ico{stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+  /* log list */
+  .logs{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .log-item{padding:12px;background:var(--card);border:1px solid var(--divider);border-radius:var(--radius);}
+  .log-item .t{font-size:12px;font-weight:500;margin-bottom:4px;}
+  .log-item .d{font-size:11px;color:var(--text-light);}
+  .log-item .when{font-size:10px;color:var(--brass);margin-top:6px;}
+  /* toast */
+  .toast{
+    position:fixed;top:80px;right:24px;background:var(--card);color:var(--paper);
+    padding:12px 18px;border-radius:var(--radius);font-size:12px;border:1px solid var(--brass);
+    z-index:2000;opacity:0;transform:translateX(20px);transition:.25s;
+  }
+  .toast.show{opacity:1;transform:translateX(0);}
+  /* settings */
+  .settings-section{padding:14px 0;border-bottom:1px dashed var(--divider);}
+  .settings-section:last-child{border-bottom:none;}
+  .settings-section .t{font-size:13px;font-weight:600;}
+  .settings-section .d{font-size:11px;color:var(--text-light);margin-top:3px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ========== Sidebar ========== -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="logo">F</div>
+    <div>
+      <div class="name">Filmer Admin</div>
+      <div class="sub">Console v1.4</div>
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="lbl">总览</div>
+    <div class="nav-item active" data-page="dashboard" onclick="switchPage(this,'dashboard')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/></svg>
+      数据看板
+    </div>
+    <div class="lbl">商城</div>
+    <div class="nav-item" data-page="products" onclick="switchPage(this,'products')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 21V9"/></svg>
+      商品管理
+    </div>
+    <div class="nav-item" data-page="orders" onclick="switchPage(this,'orders')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><path d="M6 7h12l-1.5 11a2 2 0 0 1-2 1.8H9.5a2 2 0 0 1-2-1.8L6 7Z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+      商城订单
+      <span class="badge">12</span>
+    </div>
+    <div class="lbl">冲扫</div>
+    <div class="nav-item" data-page="shops" onclick="switchPage(this,'shops')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><path d="M3 9l1.5-6h15L21 9M5 9v12h14V9M9 14h6"/></svg>
+      冲扫店铺
+      <span class="badge">3</span>
+    </div>
+    <div class="nav-item" data-page="dev-orders" onclick="switchPage(this,'dev-orders')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+      委托订单
+      <span class="badge">8</span>
+    </div>
+    <div class="lbl">运营</div>
+    <div class="nav-item" data-page="members" onclick="switchPage(this,'members')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 1 1 16 0"/></svg>
+      会员管理
+    </div>
+    <div class="nav-item" data-page="marketing" onclick="switchPage(this,'marketing')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><path d="m3 11 18-8-3 18-5-7-10-3Z"/></svg>
+      营销活动
+    </div>
+    <div class="lbl">系统</div>
+    <div class="nav-item" data-page="logs" onclick="switchPage(this,'logs')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      操作日志
+    </div>
+    <div class="nav-item" data-page="settings" onclick="switchPage(this,'settings')">
+      <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      系统设置
+    </div>
+  </div>
+  <div class="footer">
+    <div class="user">
+      <div class="avatar">宋</div>
+      <div>
+        <div style="color:var(--paper);font-size:12px;">宋润芃</div>
+        <div>超级管理员</div>
+      </div>
+    </div>
+    2026 © Filmer
+  </div>
+</aside>
+
+<!-- ========== Main ========== -->
+<main class="main">
+  <div class="topbar">
+    <div class="crumbs" id="crumbs">运营 / <b>数据看板</b></div>
+    <div class="right">
+      <div class="search-mini">
+        <svg width="12" height="12" viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input placeholder="搜索订单号 / SKU / 店铺" />
+      </div>
+      <div class="icon-btn" title="通知">
+        <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+      </div>
+      <div class="icon-btn" title="帮助">
+        <svg width="16" height="16" viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+<!-- =================== Page: DASHBOARD =================== -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div>
+      <div class="title">数据看板</div>
+      <div class="sub">2026 年 7 月 21 日 · 周二 · 实时更新</div>
+    </div>
+    <div class="row gap-12">
+      <button class="btn btn-ghost">
+        <svg width="12" height="12" viewBox="0 0 24 24" class="ico"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        导出报表
+      </button>
+      <button class="btn btn-brass">
+        <svg width="12" height="12" viewBox="0 0 24 24" class="ico"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        刷新数据
+      </button>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="lbl">今日 GMV</div>
+      <div class="val">¥ 86,420</div>
+      <div class="delta">▲ 12.4% vs 昨日</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl">订单数</div>
+      <div class="val">328</div>
+      <div class="delta">▲ 8.6% · 客单 ¥263</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl">冲扫委托</div>
+      <div class="val">142</div>
+      <div class="delta down">▼ 2.1% · 待寄件 18</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl">活跃店铺</div>
+      <div class="val">86</div>
+      <div class="delta">▲ 3 家新认证</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="head">
+        <div class="t">近 30 天 GMV 趋势</div>
+        <div class="range">
+          <span>7 日</span>
+          <span class="active">30 日</span>
+          <span>季度</span>
+          <span>年度</span>
+        </div>
+      </div>
+      <svg viewBox="0 0 600 200" style="width:100%;height:200px;display:block;">
+        <!-- grid -->
+        <g stroke="#3A3530" stroke-width=".5">
+          <line x1="0" y1="50"  x2="600" y2="50"/>
+          <line x1="0" y1="100" x2="600" y2="100"/>
+          <line x1="0" y1="150" x2="600" y2="150"/>
+        </g>
+        <!-- area -->
+        <defs>
+          <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#C9A96E" stop-opacity=".5"/>
+            <stop offset="100%" stop-color="#C9A96E" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,140 L25,120 L50,128 L75,100 L100,108 L125,80 L150,90 L175,65 L200,72 L225,55 L250,68 L275,40 L300,52 L325,30 L350,48 L375,28 L400,42 L425,22 L450,38 L475,18 L500,30 L525,12 L550,28 L575,15 L600,25 L600,200 L0,200 Z" fill="url(#g1)"/>
+        <path d="M0,140 L25,120 L50,128 L75,100 L100,108 L125,80 L150,90 L175,65 L200,72 L225,55 L250,68 L275,40 L300,52 L325,30 L350,48 L375,28 L400,42 L425,22 L450,38 L475,18 L500,30 L525,12 L550,28 L575,15 L600,25" fill="none" stroke="#C9A96E" stroke-width="2"/>
+        <!-- points -->
+        <g fill="#C9A96E">
+          <circle cx="225" cy="55" r="3"/>
+          <circle cx="375" cy="28" r="3"/>
+          <circle cx="525" cy="12" r="4" stroke="#141210" stroke-width="2"/>
+        </g>
+        <!-- labels -->
+        <g fill="#9A9080" font-size="9" font-family="Inter">
+          <text x="0"   y="195">06-22</text>
+          <text x="200" y="195">07-01</text>
+          <text x="400" y="195">07-11</text>
+          <text x="575" y="195">07-21</text>
+        </g>
+      </svg>
+    </div>
+    <div class="chart-card">
+      <div class="head">
+        <div class="t">商品类目占比</div>
+      </div>
+      <svg viewBox="0 0 200 180" style="width:100%;height:180px;display:block;">
+        <!-- donut -->
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#3A3530" stroke-width="22"/>
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#C9A96E" stroke-width="22"
+                stroke-dasharray="150 226" stroke-dashoffset="0" transform="rotate(-90 100 90)"/>
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#C25B2B" stroke-width="22"
+                stroke-dasharray="68 226" stroke-dashoffset="-150" transform="rotate(-90 100 90)"/>
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#6B8E5A" stroke-width="22"
+                stroke-dasharray="45 226" stroke-dashoffset="-218" transform="rotate(-90 100 90)"/>
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#9A9080" stroke-width="22"
+                stroke-dasharray="35 226" stroke-dashoffset="-263" transform="rotate(-90 100 90)"/>
+        <text x="100" y="85" text-anchor="middle" fill="#EDE5D8" font-family="Playfair Display" font-size="18" font-weight="700">¥86k</text>
+        <text x="100" y="100" text-anchor="middle" fill="#9A9080" font-size="9">今日 GMV</text>
+      </svg>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;margin-top:10px;">
+        <div class="row gap-8"><span style="width:8px;height:8px;background:#C9A96E;border-radius:2px;display:inline-block;"></span>彩色负片 46%</div>
+        <div class="row gap-8"><span style="width:8px;height:8px;background:#C25B2B;border-radius:2px;display:inline-block;"></span>反转片 21%</div>
+        <div class="row gap-8"><span style="width:8px;height:8px;background:#6B8E5A;border-radius:2px;display:inline-block;"></span>黑白 14%</div>
+        <div class="row gap-8"><span style="width:8px;height:8px;background:#9A9080;border-radius:2px;display:inline-block;"></span>器材周边 11%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="head">
+        <div class="t">热门 SKU Top 5</div>
+        <span class="text-sm text-light">本月</span>
+      </div>
+      <div>
+        <div style="display:grid;grid-template-columns:30px 1fr 90px;align-items:center;gap:10px;padding:8px 0;font-size:12px;border-bottom:1px dashed var(--divider);">
+          <span style="color:var(--brass);font-family:'Playfair Display',serif;font-weight:700;">1</span>
+          <div><div>Kodak Portra 400</div><div class="text-sm text-light">135 · 36张</div></div>
+          <div style="text-align:right;"><span class="num" style="color:var(--brass);font-size:14px;">1,287</span> 卷</div>
+        </div>
+        <div style="display:grid;grid-template-columns:30px 1fr 90px;align-items:center;gap:10px;padding:8px 0;font-size:12px;border-bottom:1px dashed var(--divider);">
+          <span style="color:var(--brass);font-family:'Playfair Display',serif;font-weight:700;">2</span>
+          <div><div>Fuji Velvia 50</div><div class="text-sm text-light">135 · 36张</div></div>
+          <div style="text-align:right;"><span class="num" style="color:var(--brass);font-size:14px;">824</span> 卷</div>
+        </div>
+        <div style="display:grid;grid-template-columns:30px 1fr 90px;align-items:center;gap:10px;padding:8px 0;font-size:12px;border-bottom:1px dashed var(--divider);">
+          <span style="color:var(--brass);font-family:'Playfair Display',serif;font-weight:700;">3</span>
+          <div><div>Ilford HP5 Plus</div><div class="text-sm text-light">135 · 36张 · 黑白</div></div>
+          <div style="text-align:right;"><span class="num" style="color:var(--brass);font-size:14px;">562</span> 卷</div>
+        </div>
+        <div style="display:grid;grid-template-columns:30px 1fr 90px;align-items:center;gap:10px;padding:8px 0;font-size:12px;border-bottom:1px dashed var(--divider);">
+          <span style="color:var(--text-light);font-family:'Playfair Display',serif;font-weight:700;">4</span>
+          <div><div>Kodak E100</div><div class="text-sm text-light">135 · 反转片</div></div>
+          <div style="text-align:right;"><span class="num" style="color:var(--paper);font-size:14px;">318</span> 卷</div>
+        </div>
+        <div style="display:grid;grid-template-columns:30px 1fr 90px;align-items:center;gap:10px;padding:8px 0;font-size:12px;">
+          <span style="color:var(--text-light);font-family:'Playfair Display',serif;font-weight:700;">5</span>
+          <div><div>Provia 100f</div><div class="text-sm text-light">135 · 中性反转</div></div>
+          <div style="text-align:right;"><span class="num" style="color:var(--paper);font-size:14px;">241</span> 卷</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="head">
+        <div class="t">实时动态</div>
+      </div>
+      <div style="font-size:12px;line-height:1.7;">
+        <div class="row gap-8" style="padding:6px 0;border-bottom:1px dashed var(--divider);">
+          <span class="status status-paid" style="padding:1px 6px;font-size:9px;">NEW</span>
+          <span><b>宋润芃</b> 提交了订单 <span class="text-brass">D2026072109301</span></span>
+        </div>
+        <div class="row gap-8" style="padding:6px 0;border-bottom:1px dashed var(--divider);">
+          <span class="status status-shipping" style="padding:1px 6px;font-size:9px;">委托</span>
+          <span>映画馆 接到冲扫委托 <span class="text-brass">DC20260721001</span></span>
+        </div>
+        <div class="row gap-8" style="padding:6px 0;border-bottom:1px dashed var(--divider);">
+          <span class="status status-pending" style="padding:1px 6px;font-size:9px;">申请</span>
+          <span><b>大熊座（深圳）</b> 申请入驻认证</span>
+        </div>
+        <div class="row gap-8" style="padding:6px 0;border-bottom:1px dashed var(--divider);">
+          <span class="status status-cancel" style="padding:1px 6px;font-size:9px;">告警</span>
+          <span>Kodak Ektar 100 库存低于阈值（剩余 12）</span>
+        </div>
+        <div class="row gap-8" style="padding:6px 0;">
+          <span class="status status-done" style="padding:1px 6px;font-size:9px;">完成</span>
+          <span>胶片时代 完成冲扫 <span class="text-brass">DC20260720088</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Page: PRODUCTS =================== -->
+<div class="page" id="page-products">
+  <div class="page-header">
+    <div>
+      <div class="title">商品管理</div>
+      <div class="sub">胶卷 / 反转片 / 套药 / 周边器材</div>
+    </div>
+    <div class="row gap-12">
+      <button class="btn btn-ghost">批量下架</button>
+      <button class="btn btn-brass" onclick="openModal('product-modal')">
+        <svg width="12" height="12" viewBox="0 0 24 24" class="ico"><path d="M12 5v14M5 12h14"/></svg>
+        新增商品
+      </button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="toolbar">
+      <div class="filters">
+        <select>
+          <option>全部分类</option>
+          <option>彩色负片</option>
+          <option>反转片</option>
+          <option>黑白负片</option>
+          <option>套药</option>
+          <option>周边器材</option>
+        </select>
+        <select>
+          <option>全部状态</option>
+          <option>在售</option>
+          <option>下架</option>
+          <option>缺货</option>
+        </select>
+        <input placeholder="按名称 / SKU 搜索" />
+      </div>
+      <span class="text-sm text-light">共 124 个 SKU</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>商品</th>
+          <th>分类</th>
+          <th>价格</th>
+          <th>库存</th>
+          <th>月销</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">P400</div>
+              <div class="info">
+                <div class="n">Kodak Portra 400</div>
+                <div class="s"><span class="sku">SKU-A001</span> · 135 · 36张</div>
+              </div>
+            </div>
+          </td>
+          <td>彩色负片</td>
+          <td><span class="num" style="color:var(--brass);font-size:14px;">¥65</span></td>
+          <td>287</td>
+          <td>1,287</td>
+          <td><span class="status status-active">在售</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('product-modal')">编辑</span>
+              <span class="a">下架</span>
+              <span class="a del">删除</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">V50</div>
+              <div class="info">
+                <div class="n">Fuji Velvia 50</div>
+                <div class="s"><span class="sku">SKU-A002</span> · 135 · 36张</div>
+              </div>
+            </div>
+          </td>
+          <td>反转片</td>
+          <td><span class="num" style="color:var(--brass);font-size:14px;">¥98</span></td>
+          <td>168</td>
+          <td>824</td>
+          <td><span class="status status-active">在售</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('product-modal')">编辑</span>
+              <span class="a">下架</span>
+              <span class="a del">删除</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">HP5</div>
+              <div class="info">
+                <div class="n">Ilford HP5 Plus</div>
+                <div class="s"><span class="sku">SKU-A003</span> · 135 · 36张 · 黑白</div>
+              </div>
+            </div>
+          </td>
+          <td>黑白负片</td>
+          <td><span class="num" style="color:var(--brass);font-size:14px;">¥45</span></td>
+          <td>524</td>
+          <td>562</td>
+          <td><span class="status status-active">在售</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('product-modal')">编辑</span>
+              <span class="a">下架</span>
+              <span class="a del">删除</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">E100</div>
+              <div class="info">
+                <div class="n">Kodak E100</div>
+                <div class="s"><span class="sku">SKU-A004</span> · 135 · 反转片</div>
+              </div>
+            </div>
+          </td>
+          <td>反转片</td>
+          <td><span class="num" style="color:var(--brass);font-size:14px;">¥128</span></td>
+          <td>92</td>
+          <td>318</td>
+          <td><span class="status status-active">在售</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('product-modal')">编辑</span>
+              <span class="a">下架</span>
+              <span class="a del">删除</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">▣</div>
+              <div class="info">
+                <div class="n">暗袋 60×60cm</div>
+                <div class="s"><span class="sku">SKU-B018</span> · 遮光器材</div>
+              </div>
+            </div>
+          </td>
+          <td>周边器材</td>
+          <td><span class="num" style="color:var(--brass);font-size:14px;">¥28</span></td>
+          <td>1,204</td>
+          <td>148</td>
+          <td><span class="status status-active">在售</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('product-modal')">编辑</span>
+              <span class="a">下架</span>
+              <span class="a del">删除</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">⚠</div>
+              <div class="info">
+                <div class="n">Kodak Ektar 100</div>
+                <div class="s"><span class="sku">SKU-A005</span> · 120 · 中画幅</div>
+              </div>
+            </div>
+          </td>
+          <td>彩色负片</td>
+          <td><span class="num" style="color:var(--text-light);font-size:14px;">¥75</span></td>
+          <td style="color:var(--danger);">12 ⚠</td>
+          <td>87</td>
+          <td><span class="status status-inactive">缺货</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('product-modal')">编辑</span>
+              <span class="a">补货</span>
+              <span class="a del">删除</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>显示 1-6 共 124 项</span>
+      <div class="pg">
+        <span>‹</span>
+        <span class="active">1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>…</span>
+        <span>21</span>
+        <span>›</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Page: ORDERS =================== -->
+<div class="page" id="page-orders">
+  <div class="page-header">
+    <div>
+      <div class="title">商城订单</div>
+      <div class="sub">实付款、发货、售后统一管理</div>
+    </div>
+    <div class="row gap-12">
+      <button class="btn btn-ghost">导出对账单</button>
+      <button class="btn btn-brass">批量发货</button>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:14px;">
+    <div class="kpi" style="padding:12px;"><div class="lbl">今日</div><div class="val" style="font-size:20px;">328</div><div class="delta">¥86,420</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">待发货</div><div class="val" style="font-size:20px;color:var(--warning);">18</div><div class="delta">超时 3</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">已发货</div><div class="val" style="font-size:20px;color:var(--info);">42</div><div class="delta">在途</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">已完成</div><div class="val" style="font-size:20px;color:var(--success);">256</div><div class="delta">本月</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">退款中</div><div class="val" style="font-size:20px;color:var(--danger);">6</div><div class="delta down">需处理</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="toolbar">
+      <div class="filters">
+        <select>
+          <option>全部状态</option>
+          <option>待发货</option>
+          <option>已发货</option>
+          <option>已完成</option>
+          <option>已取消</option>
+        </select>
+        <input placeholder="订单编号 / 收件人" />
+      </div>
+      <span class="text-sm text-light">共 328 单</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>订单编号</th>
+          <th>商品</th>
+          <th>收件人</th>
+          <th>实付</th>
+          <th>下单时间</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sku">D2026072109301</span></td>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">P400</div>
+              <div class="info"><div class="n">Portra 400 × 1 等 3 件</div></div>
+            </div>
+          </td>
+          <td>宋润芃<br><span class="text-sm text-light">138****6620</span></td>
+          <td><span class="num" style="color:var(--brass);">¥291</span></td>
+          <td>07-21 09:30</td>
+          <td><span class="status status-pending">待发货</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('order-modal')">详情</span>
+              <span class="a">发货</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sku">D2026072108742</span></td>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">V50</div>
+              <div class="info"><div class="n">Fuji Velvia 50 × 2</div></div>
+            </div>
+          </td>
+          <td>陈扬<br><span class="text-sm text-light">186****2104</span></td>
+          <td><span class="num" style="color:var(--brass);">¥196</span></td>
+          <td>07-21 08:42</td>
+          <td><span class="status status-shipping">已发货</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('order-modal')">详情</span>
+              <span class="a">物流</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sku">D2026072108216</span></td>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">HP5</div>
+              <div class="info"><div class="n">Ilford HP5 × 5 + 暗袋 × 1</div></div>
+            </div>
+          </td>
+          <td>沈琪<br><span class="text-sm text-light">135****8829</span></td>
+          <td><span class="num" style="color:var(--brass);">¥253</span></td>
+          <td>07-21 07:18</td>
+          <td><span class="status status-paid">已支付</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('order-modal')">详情</span>
+              <span class="a">发货</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sku">D2026072006612</span></td>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">E100</div>
+              <div class="info"><div class="n">Kodak E100 × 3</div></div>
+            </div>
+          </td>
+          <td>林舟<br><span class="text-sm text-light">139****7716</span></td>
+          <td><span class="num" style="color:var(--brass);">¥384</span></td>
+          <td>07-20 19:30</td>
+          <td><span class="status status-done">已完成</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('order-modal')">详情</span>
+              <span class="a">售后</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sku">D2026072005204</span></td>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">▣</div>
+              <div class="info"><div class="n">暗袋 + Kodak Ektar</div></div>
+            </div>
+          </td>
+          <td>王远<br><span class="text-sm text-light">186****0013</span></td>
+          <td><span class="num" style="color:var(--text-light);">¥103</span></td>
+          <td>07-20 16:42</td>
+          <td><span class="status status-cancel">已取消</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('order-modal')">详情</span>
+              <span class="a">退款</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>显示 1-5 共 328 项</span>
+      <div class="pg"><span>‹</span><span class="active">1</span><span>2</span><span>3</span><span>…</span><span>66</span><span>›</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Page: SHOPS =================== -->
+<div class="page" id="page-shops">
+  <div class="page-header">
+    <div>
+      <div class="title">冲扫店铺管理</div>
+      <div class="sub">认证审核 · 工艺定价 · 设备维护 · 营业资质</div>
+    </div>
+    <div class="row gap-12">
+      <button class="btn btn-ghost">认证标准</button>
+      <button class="btn btn-brass" onclick="openModal('shop-modal')">
+        <svg width="12" height="12" viewBox="0 0 24 24" class="ico"><path d="M12 5v14M5 12h14"/></svg>
+        新增店铺
+      </button>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+    <div class="kpi" style="padding:12px;"><div class="lbl">店铺总数</div><div class="val" style="font-size:20px;">86</div><div class="delta">本月 +3</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">已认证</div><div class="val" style="font-size:20px;color:var(--success);">78</div><div class="delta">90.7%</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">待审核</div><div class="val" style="font-size:20px;color:var(--warning);">3</div><div class="delta">平均 2 天</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">本月出片</div><div class="val" style="font-size:20px;color:var(--brass);">12,860</div><div class="delta">卷</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="toolbar">
+      <div class="filters">
+        <select>
+          <option>全部状态</option>
+          <option>已认证</option>
+          <option>待审核</option>
+          <option>已暂停</option>
+        </select>
+        <select>
+          <option>全部城市</option>
+          <option>上海</option>
+          <option>杭州</option>
+          <option>深圳</option>
+        </select>
+        <input placeholder="店铺名 / 联系人" />
+      </div>
+      <span class="text-sm text-light">共 86 家</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>店铺</th>
+          <th>工艺价格</th>
+          <th>本月委托</th>
+          <th>评分</th>
+          <th>设备</th>
+          <th>认证状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb" style="font-size:13px;">映</div>
+              <div class="info">
+                <div class="n">映画馆</div>
+                <div class="s">上海 · 徐汇 · 林师傅</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="tag">C-41 ¥25</span>
+            <span class="tag">E-6 ¥35</span>
+            <span class="tag">黑白 ¥20</span>
+          </td>
+          <td><span class="num" style="color:var(--brass);">328</span> 卷</td>
+          <td>★ <b style="color:var(--brass);">4.8</b> · 286</td>
+          <td>诺日士 · 哈苏 X5</td>
+          <td><span class="status status-cert">✓ 已认证</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('shop-modal')">编辑</span>
+              <span class="a">查看</span>
+              <span class="a del">暂停</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb" style="font-size:13px;">胶</div>
+              <div class="info">
+                <div class="n">胶片时代</div>
+                <div class="s">上海 · 长宁 · 张师傅</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="tag">C-41 ¥22</span>
+            <span class="tag">E-6 ¥32</span>
+            <span class="tag">黑白 ¥18</span>
+          </td>
+          <td><span class="num" style="color:var(--brass);">242</span> 卷</td>
+          <td>★ <b style="color:var(--brass);">4.7</b> · 198</td>
+          <td>诺日士</td>
+          <td><span class="status status-cert">✓ 已认证</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('shop-modal')">编辑</span>
+              <span class="a">查看</span>
+              <span class="a del">暂停</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb" style="font-size:13px;">画</div>
+              <div class="info">
+                <div class="n">画英雄</div>
+                <div class="s">杭州 · 全国可寄</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="tag">C-41 ¥28</span>
+            <span class="tag">E-6 ¥38</span>
+          </td>
+          <td><span class="num" style="color:var(--brass);">521</span> 卷</td>
+          <td>★ <b style="color:var(--brass);">4.9</b> · 521</td>
+          <td>哈苏 X5 · 多技师</td>
+          <td><span class="status status-cert">✓ 已认证</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('shop-modal')">编辑</span>
+              <span class="a">查看</span>
+              <span class="a del">暂停</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb" style="font-size:13px;">熊</div>
+              <div class="info">
+                <div class="n">大熊座</div>
+                <div class="s">深圳 · 全国可寄 · 申请中</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="tag">C-41 ¥26</span>
+            <span class="tag">E-6 ¥36</span>
+            <span class="tag">黑白 ¥20</span>
+          </td>
+          <td>—</td>
+          <td>未运营</td>
+          <td>诺日士 QSS-372</td>
+          <td><span class="status status-pending">待审核</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="showToast('已通过审核 ✓')">通过</span>
+              <span class="a" onclick="openModal('shop-modal')">查看</span>
+              <span class="a del">驳回</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb" style="font-size:13px;">底</div>
+              <div class="info">
+                <div class="n">底片俱乐部</div>
+                <div class="s">北京 · 朝阳</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="tag">C-41 ¥30</span>
+            <span class="tag">黑白 ¥22</span>
+          </td>
+          <td><span class="num" style="color:var(--brass);">188</span> 卷</td>
+          <td>★ <b style="color:var(--brass);">4.6</b> · 142</td>
+          <td>诺日士</td>
+          <td><span class="status status-cert">✓ 已认证</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('shop-modal')">编辑</span>
+              <span class="a">查看</span>
+              <span class="a del">暂停</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>显示 1-5 共 86 项</span>
+      <div class="pg"><span>‹</span><span class="active">1</span><span>2</span><span>…</span><span>18</span><span>›</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Page: DEV ORDERS =================== -->
+<div class="page" id="page-dev-orders">
+  <div class="page-header">
+    <div>
+      <div class="title">冲扫委托</div>
+      <div class="sub">状态推进 · 异常处理 · 客服介入</div>
+    </div>
+    <button class="btn btn-brass">导出</button>
+  </div>
+
+  <div class="kpi-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:14px;">
+    <div class="kpi" style="padding:12px;"><div class="lbl">今日新增</div><div class="val" style="font-size:20px;">142</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">待寄件</div><div class="val" style="font-size:20px;color:var(--warning);">18</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">冲扫中</div><div class="val" style="font-size:20px;color:var(--info);">62</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">待返图</div><div class="val" style="font-size:20px;color:var(--brass);">24</div></div>
+    <div class="kpi" style="padding:12px;"><div class="lbl">已完成</div><div class="val" style="font-size:20px;color:var(--success);">38</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="toolbar">
+      <div class="filters">
+        <select>
+          <option>全部状态</option>
+          <option>待寄件</option>
+          <option>冲扫中</option>
+          <option>待返图</option>
+          <option>已完成</option>
+          <option>异常</option>
+        </select>
+        <select>
+          <option>全部店铺</option>
+          <option>映画馆</option>
+          <option>胶片时代</option>
+          <option>画英雄</option>
+        </select>
+        <input placeholder="委托编号 / 用户" />
+      </div>
+      <span class="text-sm text-light">共 142 单</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>委托编号</th>
+          <th>用户</th>
+          <th>店铺</th>
+          <th>工艺</th>
+          <th>金额</th>
+          <th>当前节点</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sku">DC20260721001</span></td>
+          <td>宋润芃<br><span class="text-sm text-light">138****6620</span></td>
+          <td>映画馆</td>
+          <td>C-41 精细 + 加急</td>
+          <td><span class="num" style="color:var(--brass);">¥25</span></td>
+          <td><span class="status status-pending">待寄件</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('dev-order-modal')">推进</span>
+              <span class="a">详情</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sku">DC20260720088</span></td>
+          <td>沈琪<br><span class="text-sm text-light">135****8829</span></td>
+          <td>胶片时代</td>
+          <td>C-41 精细 + 哈苏 X5</td>
+          <td><span class="num" style="color:var(--brass);">¥40</span></td>
+          <td><span class="status status-shipping">冲扫中</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('dev-order-modal')">推进</span>
+              <span class="a">详情</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sku">DC20260720072</span></td>
+          <td>陈扬<br><span class="text-sm text-light">186****2104</span></td>
+          <td>画英雄</td>
+          <td>E-6 反转专项</td>
+          <td><span class="num" style="color:var(--brass);">¥45</span></td>
+          <td><span class="status status-done">待返图</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('dev-order-modal')">推送</span>
+              <span class="a">详情</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sku">DC20260719056</span></td>
+          <td>林舟<br><span class="text-sm text-light">139****7716</span></td>
+          <td>映画馆</td>
+          <td>黑白基础</td>
+          <td><span class="num" style="color:var(--brass);">¥20</span></td>
+          <td><span class="status status-paid">已完成</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('dev-order-modal')">详情</span>
+              <span class="a">返图</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="sku">DC20260719041</span></td>
+          <td>王远<br><span class="text-sm text-light">186****0013</span></td>
+          <td>胶片时代</td>
+          <td>C-41 标准</td>
+          <td><span class="num" style="color:var(--text-light);">¥25</span></td>
+          <td><span class="status status-cancel">异常 · 丢件</span></td>
+          <td>
+            <div class="row-actions">
+              <span class="a" onclick="openModal('dev-order-modal')">介入</span>
+              <span class="a">退款</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>显示 1-5 共 142 项</span>
+      <div class="pg"><span>‹</span><span class="active">1</span><span>2</span><span>3</span><span>…</span><span>29</span><span>›</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Page: MEMBERS =================== -->
+<div class="page" id="page-members">
+  <div class="page-header">
+    <div>
+      <div class="title">会员管理</div>
+      <div class="sub">12,486 名注册用户 · 银/金/黑等级分布</div>
+    </div>
+    <button class="btn btn-brass">导出名单</button>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="lbl">总会员</div><div class="val">12,486</div><div class="delta">▲ 4.2%</div></div>
+    <div class="kpi"><div class="lbl">银会员</div><div class="val">8,420</div><div class="delta">95折</div></div>
+    <div class="kpi"><div class="lbl">金会员</div><div class="val">3,486</div><div class="delta">88折</div></div>
+    <div class="kpi"><div class="lbl">黑金</div><div class="val">580</div><div class="delta">免费冲扫券</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="toolbar">
+      <div class="filters">
+        <select>
+          <option>全部等级</option>
+          <option>银会员</option>
+          <option>金会员</option>
+          <option>黑金</option>
+        </select>
+        <input placeholder="用户名 / 手机号" />
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>用户</th>
+          <th>等级</th>
+          <th>累计下单</th>
+          <th>累计冲扫</th>
+          <th>注册</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb" style="background:linear-gradient(135deg,var(--brass),var(--brass-dark));color:var(--primary);">宋</div>
+              <div class="info">
+                <div class="n">宋润芃 <span class="text-brass" style="font-size:10px;">★</span></div>
+                <div class="s">BonnyKanegdo@engineer.com</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="status status-cert">黑金</span></td>
+          <td>32 单</td>
+          <td>18 卷</td>
+          <td>2025-09-12</td>
+          <td><span class="status status-active">活跃</span></td>
+          <td><div class="row-actions"><span class="a">详情</span><span class="a">权益</span></div></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">沈</div>
+              <div class="info"><div class="n">沈琪</div><div class="s">shenqi@…</div></div>
+            </div>
+          </td>
+          <td><span class="status status-done">金</span></td>
+          <td>22 单</td>
+          <td>36 卷</td>
+          <td>2025-04-22</td>
+          <td><span class="status status-active">活跃</span></td>
+          <td><div class="row-actions"><span class="a">详情</span><span class="a">权益</span></div></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">陈</div>
+              <div class="info"><div class="n">陈扬</div><div class="s">chenyang@…</div></div>
+            </div>
+          </td>
+          <td><span class="status status-pending">银</span></td>
+          <td>8 单</td>
+          <td>12 卷</td>
+          <td>2026-01-08</td>
+          <td><span class="status status-active">活跃</span></td>
+          <td><div class="row-actions"><span class="a">详情</span><span class="a">升级</span></div></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">林</div>
+              <div class="info"><div class="n">林舟</div><div class="s">linzhou@…</div></div>
+            </div>
+          </td>
+          <td><span class="status status-cert">黑金</span></td>
+          <td>54 单</td>
+          <td>128 卷</td>
+          <td>2024-06-30</td>
+          <td><span class="status status-active">活跃</span></td>
+          <td><div class="row-actions"><span class="a">详情</span><span class="a">权益</span></div></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="prod-cell">
+              <div class="prod-thumb">王</div>
+              <div class="info"><div class="n">王远</div><div class="s">wangyuan@…</div></div>
+            </div>
+          </td>
+          <td><span class="status status-cancel">已冻结</span></td>
+          <td>3 单</td>
+          <td>0</td>
+          <td>2026-06-14</td>
+          <td><span class="status status-inactive">休眠</span></td>
+          <td><div class="row-actions"><span class="a">详情</span><span class="a del">解冻</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>显示 1-5 共 12,486 项</span>
+      <div class="pg"><span>‹</span><span class="active">1</span><span>2</span><span>3</span><span>…</span><span>2498</span><span>›</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Page: MARKETING =================== -->
+<div class="page" id="page-marketing">
+  <div class="page-header">
+    <div>
+      <div class="title">营销活动</div>
+      <div class="sub">优惠券 · 限时秒杀 · 满减 · 冲扫券</div>
+    </div>
+    <button class="btn btn-brass" onclick="openModal('coupon-modal')">新建活动</button>
+  </div>
+
+  <div class="logs">
+    <div class="log-item">
+      <div class="t">满 200 减 10</div>
+      <div class="d">适用范围：彩色负片 / 反转片 · 全场可用</div>
+      <div class="when">已发出 2,486 张 · 使用率 32%</div>
+      <div style="margin-top:8px;"><div class="switch on" onclick="this.classList.toggle('on')"></div> <span class="text-sm text-light" style="margin-left:6px;">进行中</span></div>
+    </div>
+    <div class="log-item">
+      <div class="t">黑金会员 · 冲扫券 -¥20</div>
+      <div class="d">自动发放至会员账户 · 月度 2 张</div>
+      <div class="when">本月已用 412 张</div>
+      <div style="margin-top:8px;"><div class="switch on" onclick="this.classList.toggle('on')"></div> <span class="text-sm text-light" style="margin-left:6px;">进行中</span></div>
+    </div>
+    <div class="log-item">
+      <div class="t">Portra 400 限时秒杀</div>
+      <div class="d">¥58 / 卷 · 限 500 卷 · 7.20-7.22</div>
+      <div class="when">已售 287 / 500 卷</div>
+      <div style="margin-top:8px;"><div class="switch on" onclick="this.classList.toggle('on')"></div> <span class="text-sm text-light" style="margin-left:6px;">进行中</span></div>
+    </div>
+    <div class="log-item">
+      <div class="t">新人首单立减 ¥30</div>
+      <div class="d">新注册 7 天内可用 · 不可叠加</div>
+      <div class="when">已发出 1,824 张 · 转化率 24%</div>
+      <div style="margin-top:8px;"><div class="switch on" onclick="this.classList.toggle('on')"></div> <span class="text-sm text-light" style="margin-left:6px;">进行中</span></div>
+    </div>
+    <div class="log-item">
+      <div class="t">画英雄 7 周年活动</div>
+      <div class="d">C-41 + E-6 8 折 · 限店铺内使用</div>
+      <div class="when">已结束 · 2026-07-08</div>
+      <div style="margin-top:8px;"><div class="switch" onclick="this.classList.toggle('on')"></div> <span class="text-sm text-light" style="margin-left:6px;">已结束</span></div>
+    </div>
+    <div class="log-item">
+      <div class="t">胶片时代 周末满减</div>
+      <div class="d">周末 C-41 + 哈苏 X5 套餐 ¥45</div>
+      <div class="when">每周五六日生效</div>
+      <div style="margin-top:8px;"><div class="switch on" onclick="this.classList.toggle('on')"></div> <span class="text-sm text-light" style="margin-left:6px;">进行中</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Page: LOGS =================== -->
+<div class="page" id="page-logs">
+  <div class="page-header">
+    <div>
+      <div class="title">操作日志</div>
+      <div class="sub">管理员行为审计 · 可追溯 90 天</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="toolbar">
+      <div class="filters">
+        <select><option>全部</option><option>商品</option><option>订单</option><option>店铺</option><option>设置</option></select>
+        <input placeholder="操作人 / 内容关键字" />
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>时间</th>
+          <th>操作人</th>
+          <th>类型</th>
+          <th>对象</th>
+          <th>变更</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>07-21 09:30:42</td>
+          <td>宋润芃</td>
+          <td><span class="status status-done">商品</span></td>
+          <td>Kodak Portra 400</td>
+          <td>价格 ¥65 → ¥68</td>
+          <td class="text-sm text-light">114.86.32.108</td>
+        </tr>
+        <tr>
+          <td>07-21 09:12:05</td>
+          <td>宋润芃</td>
+          <td><span class="status status-paid">订单</span></td>
+          <td>D2026072005204</td>
+          <td>执行退款 ¥103</td>
+          <td class="text-sm text-light">114.86.32.108</td>
+        </tr>
+        <tr>
+          <td>07-20 18:24:11</td>
+          <td>李雪</td>
+          <td><span class="status status-cert">店铺</span></td>
+          <td>大熊座（深圳）</td>
+          <td>认证审核通过</td>
+          <td class="text-sm text-light">222.71.108.42</td>
+        </tr>
+        <tr>
+          <td>07-20 14:55:30</td>
+          <td>宋润芃</td>
+          <td><span class="status status-pending">营销</span></td>
+          <td>Portra 400 限时秒杀</td>
+          <td>创建活动 · 7.20-7.22</td>
+          <td class="text-sm text-light">114.86.32.108</td>
+        </tr>
+        <tr>
+          <td>07-20 10:08:55</td>
+          <td>系统</td>
+          <td><span class="status status-shipping">委托</span></td>
+          <td>DC20260719041</td>
+          <td>异常告警 · 自动标记丢件</td>
+          <td class="text-sm text-light">system</td>
+        </tr>
+        <tr>
+          <td>07-20 09:42:18</td>
+          <td>宋润芃</td>
+          <td><span class="status status-cancel">设置</span></td>
+          <td>会员等级阈值</td>
+          <td>黑金门槛 800 → 600</td>
+          <td class="text-sm text-light">114.86.32.108</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <span>共 4,128 条记录</span>
+      <div class="pg"><span>‹</span><span class="active">1</span><span>2</span><span>…</span><span>826</span><span>›</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== Page: SETTINGS =================== -->
+<div class="page" id="page-settings">
+  <div class="page-header">
+    <div>
+      <div class="title">系统设置</div>
+      <div class="sub">平台参数、会员体系、营销策略</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:20px;">
+    <div class="settings-section">
+      <div class="t">平台信息</div>
+      <div class="d">Filmer 商城 · 冲扫服务平台 · v1.4.2</div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="form-row"><label class="lbl">平台名称</label><input value="Filmer" /></div>
+        <div class="form-row"><label class="lbl">客服电话</label><input value="400-820-1985" /></div>
+        <div class="form-row"><label class="lbl">ICP 备案号</label><input value="沪ICP备20240815号" /></div>
+        <div class="form-row"><label class="lbl">客服邮箱</label><input value="hi@filmer.app" /></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="t">会员等级阈值</div>
+      <div class="d">按累计 GMV 自动判定，可手动调整</div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="form-row"><label class="lbl">银会员门槛</label><input value="¥0" /></div>
+        <div class="form-row"><label class="lbl">金会员门槛</label><input value="¥500" /></div>
+        <div class="form-row"><label class="lbl">黑金会员门槛</label><input value="¥600" /></div>
+        <div class="form-row"><label class="lbl">自动降级周期</label><select><option>12 个月无消费</option><option>18 个月无消费</option><option>24 个月无消费</option></select></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="t">冲扫认证规则</div>
+      <div class="d">店铺申请认证必须满足的最低标准</div>
+      <div class="form-grid" style="margin-top:14px;">
+        <div class="form-row"><label class="lbl">设备最低门槛</label>
+          <select><option>诺日士 QSS 系列</option><option>哈苏 X5（推荐）</option></select>
+        </div>
+        <div class="form-row"><label class="lbl">营业资质</label><select><option>营业执照 + 卫生许可</option><option>营业执照</option></select></div>
+        <div class="form-row"><label class="lbl">试运营期</label><input value="30 天" /></div>
+        <div class="form-row"><label class="lbl">平均出片时效</label><input value="≤ 72h" /></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="t">通知与告警</div>
+      <div class="d">异常情况自动通知相关人员</div>
+      <div style="margin-top:14px;font-size:12px;">
+        <div class="row gap-12" style="padding:8px 0;border-bottom:1px dashed var(--divider);">
+          <span>库存低于安全阈值</span>
+          <div style="margin-left:auto;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="row gap-12" style="padding:8px 0;border-bottom:1px dashed var(--divider);">
+          <span>店铺认证申请</span>
+          <div style="margin-left:auto;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="row gap-12" style="padding:8px 0;border-bottom:1px dashed var(--divider);">
+          <span>冲扫委托超时未出片</span>
+          <div style="margin-left:auto;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="row gap-12" style="padding:8px 0;">
+          <span>异常订单/退款</span>
+          <div style="margin-left:auto;"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+      <button class="btn btn-ghost">取消</button>
+      <button class="btn btn-brass" onclick="showToast('设置已保存 ✓')">保存设置</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</main>
+</div><!-- /app -->
+
+<!-- ========== Modals ========== -->
+
+<!-- Product Modal -->
+<div class="modal-mask" id="product-modal">
+  <div class="modal">
+    <div class="head">
+      <div class="t">编辑商品 · Kodak Portra 400</div>
+      <button class="btn btn-sm btn-ghost" onclick="closeModal('product-modal')">×</button>
+    </div>
+    <div class="body">
+      <div class="form-grid">
+        <div class="form-row"><label class="lbl">商品名称</label><input value="Kodak Portra 400 135 彩色负片" /></div>
+        <div class="form-row"><label class="lbl">SKU 编号</label><input value="SKU-A001" /></div>
+        <div class="form-row"><label class="lbl">分类</label>
+          <select><option>彩色负片</option><option>反转片</option><option>黑白负片</option></select>
+        </div>
+        <div class="form-row"><label class="lbl">规格</label>
+          <select><option>135 · 36张</option><option>120 × 3</option><option>5 卷套餐</option></select>
+        </div>
+        <div class="form-row"><label class="lbl">价格 (¥)</label><input value="65" type="number" /></div>
+        <div class="form-row"><label class="lbl">会员价 (¥)</label><input value="61.75" type="number" /></div>
+        <div class="form-row"><label class="lbl">库存</label><input value="287" type="number" /></div>
+        <div class="form-row"><label class="lbl">安全阈值</label><input value="50" type="number" /></div>
+      </div>
+      <div class="form-row"><label class="lbl">商品描述</label>
+        <textarea>Kodak Portra 400 — 业界标杆的人像负片，T-Grain 乳剂技术，高宽容度，适合人像、街拍、旅行记录。</textarea>
+      </div>
+      <div class="form-row">
+        <label class="lbl">商品图</label>
+        <div style="display:flex;gap:8px;">
+          <div style="width:60px;height:60px;background:linear-gradient(135deg,#3a2c1d,#1a1612);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--brass);font-family:'Playfair Display',serif;font-weight:700;">P400</div>
+          <div style="width:60px;height:60px;background:var(--bg-darker);border:1px dashed var(--divider);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--text-light);">+</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <button class="btn btn-ghost" onclick="closeModal('product-modal')">取消</button>
+      <button class="btn btn-brass" onclick="showToast('商品已保存 ✓');closeModal('product-modal')">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-mask" id="order-modal">
+  <div class="modal">
+    <div class="head">
+      <div class="t">订单详情 · D2026072109301</div>
+      <button class="btn btn-sm btn-ghost" onclick="closeModal('order-modal')">×</button>
+    </div>
+    <div class="body">
+      <div style="background:var(--bg-darker);padding:12px;border-radius:var(--radius);margin-bottom:14px;">
+        <div class="row gap-8" style="margin-bottom:6px;font-size:12px;"><span class="status status-pending">待发货</span><span class="text-light">· 07-21 09:30 下单</span></div>
+        <div class="prod-cell">
+          <div class="prod-thumb">P400</div>
+          <div class="info">
+            <div class="n">Kodak Portra 400 × 1</div>
+            <div class="s">¥65 + Fuji Velvia 50 × 2 ¥196 + 暗袋 × 1 ¥28</div>
+          </div>
+          <div class="num" style="color:var(--brass);">¥291</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="lbl">收件人</label>
+        <input value="宋润芃 · 138****6620" />
+      </div>
+      <div class="form-row">
+        <label class="lbl">收货地址</label>
+        <textarea>上海市 徐汇区 漕溪北路 1058 号 国金中心 5F-512 室</textarea>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label class="lbl">物流方式</label>
+          <select><option>顺丰 ¥12</option><option>邮政 ¥8</option></select>
+        </div>
+        <div class="form-row"><label class="lbl">运单号</label><input placeholder="请输入运单号" /></div>
+      </div>
+    </div>
+    <div class="footer">
+      <button class="btn btn-ghost" onclick="closeModal('order-modal')">取消</button>
+      <button class="btn btn-brass" onclick="showToast('已标记发货 ✦');closeModal('order-modal')">确认发货</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shop Modal -->
+<div class="modal-mask" id="shop-modal">
+  <div class="modal">
+    <div class="head">
+      <div class="t">编辑店铺 · 映画馆</div>
+      <button class="btn btn-sm btn-ghost" onclick="closeModal('shop-modal')">×</button>
+    </div>
+    <div class="body">
+      <div class="form-grid">
+        <div class="form-row"><label class="lbl">店铺名称</label><input value="映画馆" /></div>
+        <div class="form-row"><label class="lbl">联系人</label><input value="林师傅" /></div>
+        <div class="form-row"><label class="lbl">城市</label>
+          <select><option>上海</option><option>杭州</option><option>深圳</option></select>
+        </div>
+        <div class="form-row"><label class="lbl">区域</label><input value="徐汇区" /></div>
+        <div class="form-row"><label class="lbl">详细地址</label><input value="肇嘉浜路 333 号 403 室" /></div>
+        <div class="form-row"><label class="lbl">联系电话</label><input value="138****8821" /></div>
+      </div>
+      <div class="form-row">
+        <label class="lbl">工艺价格</label>
+        <div class="form-grid">
+          <div class="form-row" style="margin:0;"><label class="lbl">C-41 (¥)</label><input value="25" type="number" /></div>
+          <div class="form-row" style="margin:0;"><label class="lbl">E-6 (¥)</label><input value="35" type="number" /></div>
+          <div class="form-row" style="margin:0;"><label class="lbl">黑白 (¥)</label><input value="20" type="number" /></div>
+          <div class="form-row" style="margin:0;"><label class="lbl">哈苏 X5 升级 (¥)</label><input value="15" type="number" /></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="lbl">认证状态</label>
+        <div class="row gap-12">
+          <label class="row gap-8"><input type="radio" name="cert" checked /> 已认证</label>
+          <label class="row gap-8"><input type="radio" name="cert" /> 暂停</label>
+          <label class="row gap-8"><input type="radio" name="cert" /> 待审核</label>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <button class="btn btn-ghost" onclick="closeModal('shop-modal')">取消</button>
+      <button class="btn btn-brass" onclick="showToast('店铺信息已保存 ✓');closeModal('shop-modal')">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dev Order Modal -->
+<div class="modal-mask" id="dev-order-modal">
+  <div class="modal">
+    <div class="head">
+      <div class="t">推进委托 · DC20260721001</div>
+      <button class="btn btn-sm btn-ghost" onclick="closeModal('dev-order-modal')">×</button>
+    </div>
+    <div class="body">
+      <div style="background:var(--bg-darker);padding:12px;border-radius:var(--radius);margin-bottom:14px;">
+        <div class="row gap-8" style="font-size:12px;">
+          <b>宋润芃</b> · 映画馆 · C-41 精细 + 加急
+          <span class="status status-pending" style="margin-left:auto;">待寄件</span>
+        </div>
+      </div>
+
+      <div class="lbl" style="font-size:11px;color:var(--text-light);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">推进时间线</div>
+      <div class="timeline-edit card" style="border:none;">
+        <div class="item"><div class="l"><div class="dot"></div>已下单</div><span class="text-sm text-light">07-21 10:30 ✓</span></div>
+        <div class="item"><div class="l"><div class="dot"></div>已支付</div><span class="text-sm text-light">07-21 11:00 ✓</span></div>
+        <div class="item pending"><div class="l"><div class="dot"></div>待寄件</div>
+          <select style="background:var(--bg-darker);color:var(--paper);border:1px solid var(--divider);padding:3px 8px;border-radius:2px;font-size:11px;">
+            <option>标记寄件</option><option>异常 · 联系用户</option>
+          </select>
+        </div>
+        <div class="item"><div class="l"><div class="dot"></div>待签收</div><span class="text-sm text-light">未开始</span></div>
+        <div class="item"><div class="l"><div class="dot"></div>冲扫中</div><span class="text-sm text-light">未开始</span></div>
+        <div class="item"><div class="l"><div class="dot"></div>已完成</div><span class="text-sm text-light">未开始</span></div>
+      </div>
+
+      <div class="form-row" style="margin-top:14px;">
+        <label class="lbl">处理备注</label>
+        <textarea>顺丰寄件码 SF-EX-12345678 已发送，引导客户尽快寄出。如 24h 未发出将自动提醒。</textarea>
+      </div>
+    </div>
+    <div class="footer">
+      <button class="btn btn-ghost" onclick="closeModal('dev-order-modal')">取消</button>
+      <button class="btn btn-danger" style="margin-right:auto;" onclick="showToast('已标记异常');closeModal('dev-order-modal')">标异常</button>
+      <button class="btn btn-brass" onclick="showToast('已推进至下一节点 ✦');closeModal('dev-order-modal')">推进节点</button>
+    </div>
+  </div>
+</div>
+
+<!-- Coupon Modal -->
+<div class="modal-mask" id="coupon-modal">
+  <div class="modal">
+    <div class="head">
+      <div class="t">新建营销活动</div>
+      <button class="btn btn-sm btn-ghost" onclick="closeModal('coupon-modal')">×</button>
+    </div>
+    <div class="body">
+      <div class="form-row"><label class="lbl">活动名称</label><input placeholder="例如：Portra 400 立减 10" /></div>
+      <div class="form-grid">
+        <div class="form-row"><label class="lbl">类型</label>
+          <select><option>满减券</option><option>立减券</option><option>折扣</option><option>限时秒杀</option></select>
+        </div>
+        <div class="form-row"><label class="lbl">适用范围</label>
+          <select><option>全场</option><option>彩色负片</option><option>反转片</option><option>指定 SKU</option></select>
+        </div>
+        <div class="form-row"><label class="lbl">优惠额度</label><input value="-¥10" /></div>
+        <div class="form-row"><label class="lbl">使用门槛</label><input value="满 ¥200" /></div>
+        <div class="form-row"><label class="lbl">开始时间</label><input value="2026-07-21" /></div>
+        <div class="form-row"><label class="lbl">结束时间</label><input value="2026-07-28" /></div>
+        <div class="form-row"><label class="lbl">发放总量</label><input value="1000" type="number" /></div>
+        <div class="form-row"><label class="lbl">每人限领</label><input value="1" type="number" /></div>
+      </div>
+    </div>
+    <div class="footer">
+      <button class="btn btn-ghost" onclick="closeModal('coupon-modal')">取消</button>
+      <button class="btn btn-brass" onclick="showToast('活动已创建 ✓');closeModal('coupon-modal')">创建</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">已保存</div>
+
+<script>
+  /* ========== Page Switch ========== */
+  function switchPage(el, page){
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const t = document.getElementById('page-' + page);
+    if(t) t.classList.add('active');
+    const titles = {dashboard:'数据看板', products:'商品管理', orders:'商城订单', shops:'冲扫店铺', 'dev-orders':'委托订单', members:'会员管理', marketing:'营销活动', logs:'操作日志', settings:'系统设置'};
+    const groups = {dashboard:'总览', products:'商城', orders:'商城', shops:'冲扫', 'dev-orders':'冲扫', members:'运营', marketing:'运营', logs:'系统', settings:'系统'};
+    document.getElementById('crumbs').innerHTML = groups[page] + ' / <b>' + titles[page] + '</b>';
+  }
+
+  /* ========== Modal ========== */
+  function openModal(id){
+    document.getElementById(id).classList.add('show');
+  }
+  function closeModal(id){
+    document.getElementById(id).classList.remove('show');
+  }
+  document.querySelectorAll('.modal-mask').forEach(m => {
+    m.addEventListener('click', e => { if(e.target === m) m.classList.remove('show'); });
+  });
+
+  /* ========== Toast ========== */
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> t.classList.remove('show'), 1800);
+  }
+
+  /* ========== Switch ========== */
+  document.querySelectorAll('.switch').forEach(s => {
+    s.addEventListener('click', () => s.classList.toggle('on'));
+  });
+
+  /* ========== Navitem badges (filter) ========== */
+  document.querySelectorAll('[data-page]').forEach(n => {
+    n.addEventListener('click', () => {
+      const b = n.querySelector('.badge');
+      // noop for demo
+    });
+  });
+</script>
+</body>
+</html>

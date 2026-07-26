@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Filmer — 高保真原型 v2（MVP 31 屏）</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #141210;
+      --bg-darker: #0D0B09;
+      --card: #1E1B17;
+      --paper: #EDE5D8;
+      --brass: #C9A96E;
+      --brass-light: #D4B578;
+      --brass-dark: #B8944F;
+      --kodak: #C25B2B;
+      --text-light: #9A9080;
+      --divider: #3A3530;
+    }
+
+    html, body {
+      height: 100%;
+      background: #0D0B09;
+      font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+      color: var(--paper);
+      overflow: hidden;
+    }
+
+    /* ── Stage ── */
+    .stage {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle vignette */
+    .stage::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(201,169,110,0.06), transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(194,91,43,0.04), transparent 50%);
+      pointer-events: none;
+    }
+
+    /* Subtle grain overlay */
+    .stage::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Side info (left of phone) ── */
+    .info-panel {
+      max-width: 280px;
+      color: var(--paper);
+      z-index: 2;
+    }
+    .info-eyebrow {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--brass);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+    .info-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 18px;
+    }
+    .info-title span { color: var(--brass); font-style: italic; }
+    .info-sub {
+      font-size: 13px;
+      color: var(--text-light);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+    .info-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding-top: 20px;
+      border-top: 1px solid var(--divider);
+    }
+    .info-stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--brass);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .info-stat-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--text-light);
+      text-transform: uppercase;
+    }
+    .info-section {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--divider);
+    }
+    .info-section-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--brass);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .info-link {
+      display: block;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: var(--text-light);
+      text-decoration: none;
+      padding: 6px 0;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .info-link:hover { color: var(--brass); }
+    .info-link::before { content: '→ '; color: var(--brass); }
+
+    /* ── Phone Device ── */
+    .phone-device {
+      width: 375px;
+      height: 812px;
+      background: #141210;
+      border-radius: 50px;
+      box-shadow:
+        0 0 0 4px #1C1C1E,
+        0 0 0 6px #2C2C2E,
+        0 0 0 8px #0A0908,
+        0 30px 60px rgba(0,0,0,0.8),
+        0 0 100px rgba(201,169,110,0.08);
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      z-index: 2;
+    }
+
+    /* iPhone-style dynamic island (DOM element for proper z-index) */
+    .dynamic-island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 110px;
+      height: 32px;
+      background: #0A0908;
+      border-radius: 20px;
+      z-index: 150;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    /* Home indicator (DOM element) */
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 3px;
+      z-index: 150;
+      pointer-events: none;
+    }
+
+    /* ── Iframe Stack ── */
+    .frame-wrap {
+      position: absolute;
+      inset: 0;
+      background: var(--primary);
+      z-index: 1;
+    }
+    iframe.frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: var(--primary);
+      display: none;
+    }
+    iframe.frame.active { display: block; }
+
+    /* ── Tab Bar (overlaid on iframe) ── */
+    .tab-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(20,18,16,0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--divider);
+      display: flex;
+      align-items: stretch;
+      justify-content: space-around;
+      z-index: 50;
+      padding-bottom: 8px;
+    }
+
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: color 0.2s;
+      position: relative;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tab-item.active { color: var(--brass); }
+    .tab-icon {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .tab-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+    /* Active indicator */
+    .tab-item.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 2px;
+      background: var(--brass);
+      box-shadow: 0 0 8px rgba(201,169,110,0.5);
+    }
+
+    /* ── FAB (发布) ── */
+    .fab {
+      position: absolute;
+      bottom: 80px;
+      right: 18px;
+      width: 54px;
+      height: 54px;
+      background: linear-gradient(180deg, #D4B578 0%, #C9A96E 50%, #B8944F 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 60;
+      box-shadow:
+        0 4px 20px rgba(201,169,110,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.25);
+      transition: transform 0.2s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fab:active { transform: scale(0.92); }
+    .fab svg {
+      width: 26px;
+      height: 26px;
+      stroke: #1A1208;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+    }
+
+    /* ── Right meta panel ── */
+    .meta-panel {
+      max-width: 260px;
+      color: var(--paper);
+      z-index: 2;
+    }
+    .meta-hint {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--brass);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+    .meta-list {
+      list-style: none;
+      counter-reset: meta;
+    }
+    .meta-list li {
+      counter-increment: meta;
+      position: relative;
+      padding: 10px 0 10px 36px;
+      border-bottom: 1px solid rgba(58,53,48,0.4);
+      font-size: 12px;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: color 0.15s;
+      line-height: 1.5;
+    }
+    .meta-list li::before {
+      content: counter(meta, decimal-leading-zero);
+      position: absolute;
+      left: 0;
+      top: 10px;
+      font-family: 'Playfair Display', serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brass);
+      font-style: italic;
+    }
+    .meta-list li:hover { color: var(--paper); }
+    .meta-list li strong {
+      display: block;
+      color: var(--paper);
+      font-weight: 500;
+      margin-bottom: 2px;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 13px;
+    }
+
+    .meta-divider {
+      height: 1px;
+      background: var(--divider);
+      margin: 24px 0;
+    }
+
+    .meta-foot {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      color: var(--text-light);
+      letter-spacing: 1.5px;
+      line-height: 1.7;
+    }
+    .meta-foot strong { color: var(--brass); font-weight: 600; }
+
+    /* ── Toast (shared) ── */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30,27,23,0.96);
+      color: var(--paper);
+      padding: 10px 22px;
+      border-radius: 3px;
+      font-size: 13px;
+      border: 1px solid var(--brass);
+      z-index: 9999;
+      font-family: 'Noto Sans SC', sans-serif;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      animation: toastIn 0.2s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translate(-50%, 8px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* ── Screen ID badge (debug overlay, top-left) ── */
+    .screen-badge {
+      position: absolute;
+      top: 56px;
+      left: 14px;
+      background: rgba(20,18,16,0.85);
+      border: 1px solid var(--brass);
+      border-radius: 3px;
+      padding: 4px 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--brass);
+      z-index: 200;
+      pointer-events: none;
+      display: none;
+    }
+    .screen-badge.show { display: block; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .info-panel, .meta-panel { display: none; }
+    }
+    @media (max-width: 480px) {
+      .phone-device {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .phone-device::before { display: none; }
+      .phone-device::after { display: none; }
+      .stage { padding: 0; gap: 0; }
+    }
+  </style>
+  <link rel="stylesheet" href="shared/filmer-v3.css">
+</head>
+<body data-module="shell">
+
+<div class="stage">
+
+  <!-- ─── Left Info Panel ─── -->
+  <div class="info-panel">
+    <div class="info-eyebrow">FILMER · PROTOTYPE V2</div>
+    <h1 class="info-title">Every Roll is <span>Limited</span></h1>
+    <p class="info-sub">
+      胶片玩家的一站式平台：高保真原型 v2，覆盖 MVP 全部 31 个核心屏幕。点击底部 Tab 切换四大主模块。
+    </p>
+    <div class="info-stats">
+      <div>
+        <div class="info-stat-num">31</div>
+        <div class="info-stat-label">Screens</div>
+      </div>
+      <div>
+        <div class="info-stat-num">04</div>
+        <div class="info-stat-label">Modules</div>
+      </div>
+      <div>
+        <div class="info-stat-num">2026</div>
+        <div class="info-stat-label">Phase 0+1</div>
+      </div>
+      <div>
+        <div class="info-stat-num">MVP</div>
+        <div class="info-stat-label">Ready</div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">DOCUMENTS</div>
+      <a class="info-link" href="../product/PRD-Filmer-MVP.md" target="_blank">PRD v1.0 · 完整功能需求</a>
+      <a class="info-link" href="../product/BRD-胶片影像平台.md" target="_blank">BRD v1.1 · 商业需求</a>
+      <a class="info-link" href="VI-视觉规范.md" target="_blank">VI 视觉规范</a>
+      <a class="info-link" href="README.md" target="_blank">技术方案</a>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">SHORTCUTS</div>
+      <a class="info-link" onclick="openTab('feed'); setTimeout(()=>callFrame('feed','showScreen','screen-feed'),100)">发现首页</a>
+      <a class="info-link" onclick="openPublish()">打开发布笔记</a>
+      <a class="info-link" onclick="openTab('profile'); setTimeout(()=>callFrame('profile','showScreen','screen-member-center'),200)">会员中心</a>
+    </div>
+  </div>
+
+  <!-- ─── Phone Device ─── -->
+  <div class="phone-device">
+
+    <!-- Dynamic island (real DOM for z-index) -->
+    <div class="dynamic-island"></div>
+    <!-- Home indicator -->
+    <div class="home-indicator"></div>
+
+    <!-- Iframes (one per tab) -->
+    <div class="frame-wrap">
+      <iframe id="frame-feed" class="frame active" src="tabs/feed.html"></iframe>
+      <iframe id="frame-rental" class="frame" src="tabs/rental.html"></iframe>
+      <iframe id="frame-shop" class="frame" src="tabs/shop.html"></iframe>
+      <iframe id="frame-profile" class="frame" src="tabs/profile.html"></iframe>
+    </div>
+
+    <!-- Debug screen badge -->
+    <div class="screen-badge" id="screen-badge">SCREEN</div>
+
+    <!-- Five-slot global navigation -->
+    <nav class="tab-bar" data-global-nav aria-label="主导航">
+      <button type="button" class="tab-item active" data-tab="feed" onclick="openTab('feed')" aria-label="发现">
+        <svg class="tab-icon" viewBox="0 0 24 24">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="tab-label">发现</span>
+      </button>
+      <button type="button" class="tab-item" data-tab="rental" onclick="openTab('rental')" aria-label="租赁">
+        <svg class="tab-icon" viewBox="0 0 24 24">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        </svg>
+        <span class="tab-label">租赁</span>
+      </button>
+      <button type="button" class="tab-item publish-tab" onclick="openPublish()" aria-label="发卷">
+        <span class="publish-mark" aria-hidden="true">＋</span>
+        <span class="tab-label">发卷</span>
+      </button>
+      <button type="button" class="tab-item" data-tab="shop" onclick="openTab('shop')" aria-label="商城">
+        <svg class="tab-icon" viewBox="0 0 24 24">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        <span class="tab-label">商城</span>
+      </button>
+      <button type="button" class="tab-item" data-tab="profile" onclick="openTab('profile')" aria-label="我的">
+        <svg class="tab-icon" viewBox="0 0 24 24">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span class="tab-label">我的</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ─── Right Meta Panel ─── -->
+  <div class="meta-panel">
+    <div class="meta-hint">FLOW GUIDE</div>
+    <ol class="meta-list">
+      <li onclick="openTab('feed'); setTimeout(()=>callFrame('feed','showScreen','screen-feed'),100)">
+        <strong>发现 Feed</strong>
+        瀑布流 + 排序 + 话题
+      </li>
+      <li onclick="openTab('feed'); setTimeout(()=>callFrame('feed','showScreen','screen-detail'),100)">
+        <strong>笔记详情</strong>
+        胶片信息卡 + 评论楼中楼
+      </li>
+      <li onclick="openPublish()">
+        <strong>发布笔记</strong>
+        9 项胶片信息卡自动校验
+      </li>
+      <li onclick="openTab('rental'); setTimeout(()=>callFrame('rental','showScreen','screen-camera-detail'),200)">
+        <strong>租赁下单</strong>
+        押金冻结 + 损坏险可选
+      </li>
+      <li onclick="openTab('shop'); setTimeout(()=>callFrame('shop','showScreen','screen-product-detail'),200)">
+        <strong>商品详情</strong>
+        种草笔记挂商品链接（核心差异化）
+      </li>
+      <li onclick="openTab('shop'); setTimeout(()=>callFrame('shop','showScreen','screen-dev-progress'),200)">
+        <strong>冲扫进度</strong>
+        6 节点时间线 + 寄件码
+      </li>
+      <li onclick="openTab('profile'); setTimeout(()=>callFrame('profile','showScreen','screen-member-upgrade'),200)">
+        <strong>会员升级</strong>
+        银 ¥29/月 · 金 ¥79/月
+      </li>
+      <li onclick="openTab('profile'); setTimeout(()=>callFrame('profile','showScreen','screen-kol-apply'),200)">
+        <strong>KOL 入驻</strong>
+        500 粉 + 10 篇 + 50 赞
+      </li>
+    </ol>
+
+    <div class="meta-divider"></div>
+
+    <div class="meta-foot">
+      <strong>VI 主题：</strong>暖黑 #141210 + 黄铜 #C9A96E + 银盐白 #EDE5D8<br>
+      <strong>字体：</strong>Playfair Display · Inter · Noto Sans SC<br>
+      <strong>数据：</strong>用户「李在在」· 宾得67 + Kodak E100 · 预填 8 张
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Tab switching ──
+  const loadedFrames = {};
+
+  // Auto-open tab from URL: prototype-v2.html?tab=rental
+  (function() {
+    const params = new URLSearchParams(location.search);
+    const t = params.get('tab');
+    if (t && ['feed', 'rental', 'shop', 'profile'].includes(t)) {
+      // wait for DOM, then switch
+      setTimeout(() => openTab(t), 50);
+    }
+    const screen = params.get('screen');
+    if (screen && t) {
+      setTimeout(() => callFrame(t, 'showScreen', screen), 400);
+    }
+  })();
+
+  function openTab(name, resetRoot = true) {
+    document.querySelectorAll('iframe.frame').forEach(f => f.classList.remove('active'));
+    const frame = document.getElementById('frame-' + name);
+    if (frame) frame.classList.add('active');
+
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    const tab = document.querySelector(`.tab-item[data-tab="${name}"]`);
+    if (tab) tab.classList.add('active');
+
+    const rootScreens = {
+      feed: 'screen-feed',
+      rental: 'screen-rental-home',
+      shop: 'screen-shop-home',
+      profile: 'screen-mine'
+    };
+    if (resetRoot) {
+      setTimeout(() => callFrame(name, 'showScreen', rootScreens[name]), 30);
+    }
+
+    showBadge('Tab: ' + name);
+  }
+
+  // ── Cross-iframe function call ──
+  function callFrame(tabName, fnName, ...args) {
+    const frame = document.getElementById('frame-' + tabName);
+    if (!frame) return false;
+    try {
+      if (frame.contentWindow && typeof frame.contentWindow[fnName] === 'function') {
+        frame.contentWindow[fnName](...args);
+        return true;
+      }
+    } catch (e) {
+      console.warn('callFrame failed:', e);
+    }
+    return false;
+  }
+
+  // ── Center publish action ──
+  function openPublish() {
+    openTab('feed', false);
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    document.querySelector('.publish-tab')?.classList.add('active');
+    // Wait for feed iframe to be ready (it may already be loaded)
+    const tryOpen = (attempt) => {
+      const ok = callFrame('feed', 'showScreen', 'screen-publish');
+      if (!ok && attempt < 10) {
+        setTimeout(() => tryOpen(attempt + 1), 150);
+      }
+    };
+    setTimeout(() => tryOpen(0), 100);
+  }
+
+  // ── Debug badge ──
+  let badgeTimer = null;
+  function showBadge(text) {
+    const b = document.getElementById('screen-badge');
+    b.textContent = text;
+    b.classList.add('show');
+    if (badgeTimer) clearTimeout(badgeTimer);
+    badgeTimer = setTimeout(() => b.classList.remove('show'), 1500);
+  }
+
+  // ── Toast helper (used by main frame if needed) ──
+  window.showToast = (msg) => {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2000);
+  };
+
+  // ── Mark frames loaded ──
+  document.querySelectorAll('iframe.frame').forEach(f => {
+    f.addEventListener('load', () => {
+      loadedFrames[f.id] = true;
+      console.log('✓ Loaded:', f.id);
+    });
+  });
+
+  // ── Keyboard shortcuts ──
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === '1') openTab('feed');
+    else if (e.key === '2') openTab('rental');
+    else if (e.key === '3') openPublish();
+    else if (e.key === '4') openTab('shop');
+    else if (e.key === '5') openTab('profile');
+    else if (e.key === 'p' || e.key === 'P') openPublish();
+  });
+
+  console.log('%c FILMER · Prototype v2 ', 'background:#C9A96E; color:#1A1208; font-weight:bold; padding:4px 12px; border-radius:3px;');
+  console.log('快捷键: 1=发现  2=租赁  3=发卷  4=商城  5=我的  P=发布');
+</script>
+
+<script src="shared/filmer-v3.js"></script>
+
+</body>
+</html>

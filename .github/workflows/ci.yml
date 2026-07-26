@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build:server
+      - run: npm run build:app
+        env:
+          NODE_ENV: development
+          TARO_APP_API_BASE: http://127.0.0.1:3000
+          TARO_APP_WX_PAY_MODE: local-mock

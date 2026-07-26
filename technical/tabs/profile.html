@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Filmer — Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #141210;
+  --card: #1E1B17;
+  --paper: #EDE5D8;
+  --brass: #C9A96E;
+  --brass-light: #D4B578;
+  --brass-dark: #B8944F;
+  --brass-gradient: linear-gradient(135deg, #D4B578 0%, #C9A96E 50%, #B8944F 100%);
+  --kodak: #C25B2B;
+  --text-light: #9A9080;
+  --divider: #3A3530;
+  --bg-darker: #0D0B09;
+  --success: #6B8E5A;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  background: #000;
+  color: var(--paper);
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  min-height:100vh;
+  padding:0;
+}
+
+.app-container {
+  width:375px;
+  height:812px;
+  background:var(--primary);
+  position:relative;
+  overflow:hidden;
+  overflow-y:auto;
+  box-shadow:0 0 60px rgba(0,0,0,0.6);
+}
+
+.app-container::-webkit-scrollbar { display:none; }
+
+.screen {
+  display:none;
+  min-height:812px;
+  padding-bottom:32px;
+  position:relative;
+}
+.screen.active { display:block; }
+
+/* 暗角效果 */
+.screen::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+  z-index:1;
+}
+
+/* 顶部栏 */
+.topbar {
+  height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
+  position:sticky;
+  top:0;
+  background:var(--primary);
+  z-index:10;
+  border-bottom:1px solid var(--divider);
+}
+.topbar .title {
+  font-family:'Playfair Display', serif;
+  font-size:17px;
+  font-weight:700;
+  color:var(--paper);
+}
+.topbar .icon-btn {
+  width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+}
+.topbar .icon-btn svg { stroke:var(--paper); width:20px; height:20px; }
+.topbar .left, .topbar .right { display:flex; gap:8px; }
+
+/* 卡片通用 */
+.card {
+  background:var(--card);
+  border-radius:3px;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+  position:relative;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+/* 头像 */
+.avatar {
+  width:56px; height:56px;
+  border-radius:3px;
+  background:var(--brass-gradient);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Playfair Display', serif;
+  font-size:24px;
+  font-weight:700;
+  color:var(--primary);
+  box-shadow: inset 0 0 8px rgba(255,255,255,0.2), 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* 会员徽章 */
+.badge-silver {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  background:linear-gradient(135deg, #C0C0C0, #8A8A8A);
+  color:#fff;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:3px;
+  font-weight:500;
+}
+.badge-silver::before { content:''; width:8px; height:8px; background:radial-gradient(circle, #fff, #C0C0C0); border-radius:50%; }
+
+/* ===== Screen 1: 我的 ===== */
+.user-card {
+  margin:12px 16px 16px;
+  padding:16px;
+  background:var(--card);
+  border-radius:3px;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.user-info { flex:1; }
+.user-name {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:4px;
+}
+.user-name span { font-size:17px; font-weight:600; }
+.user-id { font-size:12px; color:var(--text-light); }
+
+.stats-row {
+  display:flex;
+  justify-content:space-around;
+  margin:0 16px 16px;
+  padding:14px;
+  background:var(--card);
+  border-radius:3px;
+}
+.stat-item {
+  text-align:center;
+  flex:1;
+  cursor:pointer;
+}
+.stat-num {
+  font-family:'Playfair Display', serif;
+  font-size:20px;
+  color:var(--paper);
+  font-weight:700;
+}
+.stat-label { font-size:11px; color:var(--text-light); margin-top:2px; }
+
+.member-entry {
+  margin:0 16px 16px;
+  padding:16px;
+  background:var(--brass-gradient);
+  border-radius:3px;
+  position:relative;
+  overflow:hidden;
+  box-shadow: 0 4px 16px rgba(201,169,110,0.3);
+}
+.member-entry::before {
+  content:'';
+  position:absolute;
+  top:-50%; left:-50%;
+  width:200%; height:200%;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+  pointer-events:none;
+}
+.member-entry-row {
+  display:flex; justify-content:space-between; align-items:center;
+  position:relative;
+  margin-bottom:10px;
+}
+.member-level {
+  font-family:'Playfair Display', serif;
+  font-size:18px;
+  color:var(--primary);
+  font-weight:700;
+}
+.member-saved {
+  font-size:12px;
+  color:var(--primary);
+  opacity:0.7;
+  margin-top:4px;
+}
+.btn-renew {
+  background:var(--primary);
+  color:var(--brass);
+  border:none;
+  padding:8px 16px;
+  border-radius:3px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.section-title {
+  font-size:13px;
+  font-weight:600;
+  color:var(--text-light);
+  padding:8px 16px;
+  margin-top:8px;
+  letter-spacing:0.5px;
+}
+
+.order-row {
+  display:flex;
+  justify-content:space-around;
+  margin:0 16px 16px;
+  padding:16px 8px;
+  background:var(--card);
+  border-radius:3px;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+}
+.order-item {
+  text-align:center;
+  flex:1;
+  cursor:pointer;
+  position:relative;
+}
+.order-item svg { stroke:var(--brass); width:22px; height:22px; margin-bottom:4px; }
+.order-item-label { font-size:11px; color:var(--paper); }
+.order-badge {
+  position:absolute;
+  top:-4px; right:8px;
+  background:var(--kodak);
+  color:#fff;
+  font-size:9px;
+  padding:1px 5px;
+  border-radius:8px;
+  min-width:16px;
+}
+
+.menu-list {
+  margin:0 16px;
+  background:var(--card);
+  border-radius:3px;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+  overflow:hidden;
+}
+.menu-item {
+  display:flex;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid var(--divider);
+  cursor:pointer;
+  transition:background 0.2s;
+}
+.menu-item:last-child { border-bottom:none; }
+.menu-item:active { background:rgba(201,169,110,0.05); }
+.menu-item svg {
+  width:18px; height:18px;
+  stroke:var(--brass);
+  margin-right:12px;
+  flex-shrink:0;
+}
+.menu-item span { flex:1; font-size:14px; }
+.menu-item .arrow { color:var(--text-light); font-size:18px; }
+.menu-item .menu-tag {
+  background:var(--kodak);
+  color:#fff;
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:3px;
+  margin-right:8px;
+}
+
+/* ===== Screen 2: 会员中心 ===== */
+.member-hero {
+  margin:16px;
+  padding:20px;
+  background:var(--brass-gradient);
+  border-radius:3px;
+  position:relative;
+  overflow:hidden;
+  box-shadow: 0 6px 20px rgba(201,169,110,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.member-hero::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+}
+.member-hero::after {
+  content:'';
+  position:absolute;
+  top:50%; left:-50%;
+  width:60%; height:200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1) 50%, transparent);
+  transform:rotate(30deg);
+}
+.hero-row { display:flex; justify-content:space-between; align-items:flex-end; position:relative; }
+.hero-label { font-size:11px; color:var(--primary); opacity:0.7; letter-spacing:1px; }
+.hero-level {
+  font-family:'Playfair Display', serif;
+  font-size:32px;
+  font-weight:700;
+  color:var(--primary);
+  line-height:1.1;
+  margin:4px 0 12px;
+  position:relative;
+}
+.hero-date { font-size:12px; color:var(--primary); opacity:0.7; position:relative; }
+.hero-saved {
+  text-align:right;
+  position:relative;
+}
+.hero-saved-num {
+  font-family:'Playfair Display', serif;
+  font-size:24px;
+  font-weight:700;
+  color:var(--primary);
+}
+.hero-saved-label { font-size:10px; color:var(--primary); opacity:0.7; }
+
+.benefits-row {
+  display:flex;
+  margin:0 16px 16px;
+  gap:8px;
+}
+.benefit-item {
+  flex:1;
+  background:var(--card);
+  border-radius:3px;
+  padding:12px 8px;
+  text-align:center;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+}
+.benefit-num {
+  font-family:'Playfair Display', serif;
+  font-size:18px;
+  font-weight:700;
+  color:var(--brass);
+}
+.benefit-label { font-size:11px; color:var(--text-light); margin-top:2px; }
+
+.btn-row {
+  display:flex;
+  gap:8px;
+  padding:0 16px;
+  margin-bottom:16px;
+}
+.btn-primary {
+  flex:1;
+  background:var(--brass-gradient);
+  color:var(--primary);
+  border:none;
+  padding:14px;
+  border-radius:3px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow: 0 2px 8px rgba(201,169,110,0.3);
+}
+.btn-outline {
+  flex:1;
+  background:transparent;
+  color:var(--brass);
+  border:1px solid var(--brass);
+  padding:14px;
+  border-radius:3px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.tier-table {
+  margin:0 16px 16px;
+  background:var(--card);
+  border-radius:3px;
+  overflow:hidden;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+}
+.tier-row {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  border-bottom:1px solid var(--divider);
+}
+.tier-row:last-child { border-bottom:none; }
+.tier-row.header { background:rgba(201,169,110,0.08); }
+.tier-cell {
+  padding:10px 8px;
+  text-align:center;
+  font-size:12px;
+  border-right:1px solid var(--divider);
+}
+.tier-cell:last-child { border-right:none; }
+.tier-cell.brass { color:var(--brass); font-weight:600; }
+
+.usage-list { margin:0 16px; }
+.usage-item {
+  display:flex;
+  justify-content:space-between;
+  padding:12px 0;
+  border-bottom:1px solid var(--divider);
+  font-size:13px;
+}
+.usage-item:last-child { border-bottom:none; }
+.usage-date { color:var(--text-light); font-size:11px; }
+
+/* ===== Screen 3: 升级页 ===== */
+.upgrade-hero {
+  text-align:center;
+  padding:32px 24px 16px;
+}
+.upgrade-title {
+  font-family:'Playfair Display', serif;
+  font-size:26px;
+  font-weight:700;
+  color:var(--paper);
+  margin-bottom:8px;
+}
+.upgrade-sub {
+  font-size:13px;
+  color:var(--text-light);
+}
+
+.pay-tabs {
+  display:flex;
+  margin:16px;
+  background:var(--card);
+  border-radius:3px;
+  padding:4px;
+}
+.pay-type {
+  flex:1;
+  text-align:center;
+  padding:10px;
+  font-size:13px;
+  color:var(--text-light);
+  cursor:pointer;
+  border-radius:3px;
+  transition:all 0.2s;
+}
+.pay-type.active {
+  background:var(--brass-gradient);
+  color:var(--primary);
+  font-weight:600;
+}
+.pay-discount {
+  display:inline-block;
+  background:var(--kodak);
+  color:#fff;
+  font-size:10px;
+  padding:1px 6px;
+  border-radius:8px;
+  margin-left:4px;
+}
+
+.plan-card {
+  margin:0 16px 12px;
+  padding:20px;
+  background:var(--card);
+  border-radius:3px;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+  position:relative;
+}
+.plan-card.gold {
+  border:2px solid;
+  border-image: var(--brass-gradient) 1;
+  padding:18px;
+  box-shadow: 0 4px 20px rgba(201,169,110,0.25);
+}
+.plan-recommend {
+  position:absolute;
+  top:-10px; right:16px;
+  background:var(--brass-gradient);
+  color:var(--primary);
+  font-size:11px;
+  font-weight:600;
+  padding:3px 10px;
+  border-radius:3px;
+}
+.plan-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:14px;
+}
+.plan-name {
+  font-family:'Playfair Display', serif;
+  font-size:20px;
+  font-weight:700;
+  color:var(--brass);
+}
+.plan-price {
+  font-family:'Playfair Display', serif;
+  font-size:24px;
+  font-weight:700;
+  color:var(--paper);
+}
+.plan-price small { font-size:13px; color:var(--text-light); font-family:'Inter'; font-weight:400; }
+
+.benefits-list {
+  list-style:none;
+  margin-bottom:16px;
+}
+.benefits-list li {
+  font-size:12px;
+  color:var(--paper);
+  padding:5px 0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.benefits-list li::before {
+  content:'';
+  width:14px; height:14px;
+  background:var(--brass);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") no-repeat center;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") no-repeat center;
+  flex-shrink:0;
+}
+
+.agreement {
+  margin:16px;
+  padding:12px;
+  background:var(--card);
+  border-radius:3px;
+  font-size:11px;
+  color:var(--text-light);
+  display:flex;
+  gap:8px;
+}
+.checkbox {
+  width:16px; height:16px;
+  border:1.5px solid var(--brass);
+  border-radius:2px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.checkbox.checked {
+  background:var(--brass);
+}
+.checkbox.checked::after {
+  content:'';
+  width:10px; height:10px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23141210' stroke-width='3'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") no-repeat center;
+  background-size:contain;
+}
+
+/* ===== Screen 4: 我的胶卷 ===== */
+.tabs-row {
+  display:flex;
+  margin:0 16px;
+  border-bottom:1px solid var(--divider);
+}
+.tab-item {
+  flex:1;
+  text-align:center;
+  padding:12px 0;
+  font-size:13px;
+  color:var(--text-light);
+  cursor:pointer;
+  position:relative;
+}
+.tab-item.active {
+  color:var(--brass);
+  font-weight:600;
+}
+.tab-item.active::after {
+  content:'';
+  position:absolute;
+  bottom:-1px; left:25%; right:25%;
+  height:2px;
+  background:var(--brass);
+}
+
+.film-list { padding:16px; }
+.film-item {
+  background:var(--card);
+  border-radius:3px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.film-thumb {
+  width:48px; height:48px;
+  border-radius:3px;
+  background:var(--brass-gradient);
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+}
+.film-thumb::after {
+  content:'';
+  width:24px; height:24px;
+  background: radial-gradient(circle, var(--primary) 40%, transparent 40%);
+  border-radius:50%;
+}
+.film-info { flex:1; }
+.film-name { font-size:14px; font-weight:600; margin-bottom:4px; }
+.film-meta { font-size:11px; color:var(--text-light); display:flex; gap:8px; align-items:center; }
+.status-tag {
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:3px;
+}
+.status-hold { background:rgba(107,142,90,0.2); color:var(--success); }
+.status-done { background:rgba(201,169,110,0.2); color:var(--brass); }
+.status-shoot { background:rgba(194,91,43,0.2); color:var(--kodak); }
+
+.fab {
+  position:fixed;
+  bottom:32px;
+  left:50%;
+  transform:translateX(-50%);
+  width:calc(375px - 32px);
+  margin:0 16px;
+  background:var(--brass-gradient);
+  color:var(--primary);
+  text-align:center;
+  padding:14px;
+  border-radius:3px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  border:none;
+  box-shadow: 0 4px 16px rgba(201,169,110,0.4);
+  z-index:20;
+}
+
+/* ===== Screen 5: 收藏 ===== */
+.fav-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:4px;
+  padding:16px;
+}
+.fav-card {
+  aspect-ratio:1;
+  border-radius:3px;
+  background:var(--brass-gradient);
+  position:relative;
+  overflow:hidden;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+}
+.fav-card::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg, var(--kodak), var(--brass-dark));
+  opacity:0.4;
+}
+.fav-card.c2 { background:linear-gradient(135deg, var(--kodak), #8B3F1B); }
+.fav-card.c3 { background:linear-gradient(135deg, #4A3829, var(--card)); }
+.fav-card.c4 { background:linear-gradient(135deg, var(--brass-dark), var(--primary)); }
+.fav-card.c5 { background:linear-gradient(135deg, var(--success), #3A4F30); }
+.fav-card.c6 { background:linear-gradient(135deg, #8A6E4F, var(--brass)); }
+.fav-card::after {
+  content:'Film';
+  position:absolute;
+  bottom:4px; left:4px;
+  font-size:9px;
+  color:rgba(255,255,255,0.6);
+  z-index:1;
+}
+
+/* ===== Screen 6: KOL 申请 ===== */
+.kol-banner {
+  margin:16px;
+  padding:16px;
+  background:var(--brass-gradient);
+  border-radius:3px;
+  font-size:12px;
+  color:var(--primary);
+  font-weight:500;
+  line-height:1.6;
+}
+
+.form-section { padding:0 16px 16px; }
+.form-item {
+  margin-bottom:14px;
+}
+.form-label {
+  font-size:12px;
+  color:var(--text-light);
+  margin-bottom:6px;
+  display:block;
+}
+.form-label .req { color:var(--kodak); margin-left:2px; }
+.form-input, .form-textarea {
+  width:100%;
+  background:var(--card);
+  border:1px solid var(--divider);
+  border-radius:3px;
+  padding:10px 12px;
+  color:var(--paper);
+  font-size:13px;
+  font-family:'Inter', 'Noto Sans SC', sans-serif;
+}
+.form-input:focus, .form-textarea:focus { outline:none; border-color:var(--brass); }
+.form-textarea { resize:none; height:70px; }
+
+.chip-group {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.chip {
+  padding:6px 12px;
+  border:1px solid var(--divider);
+  border-radius:3px;
+  font-size:12px;
+  color:var(--text-light);
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.chip.active {
+  background:var(--brass);
+  color:var(--primary);
+  border-color:var(--brass);
+  font-weight:500;
+}
+
+.work-pick {
+  background:var(--card);
+  border:1px dashed var(--brass);
+  border-radius:3px;
+  padding:14px;
+  text-align:center;
+  color:var(--brass);
+  font-size:12px;
+  cursor:pointer;
+}
+
+.qual-box {
+  margin:0 16px 16px;
+  padding:12px;
+  background:var(--card);
+  border-radius:3px;
+  border-left:3px solid var(--brass);
+}
+.qual-title { font-size:12px; color:var(--brass); margin-bottom:8px; font-weight:600; }
+.qual-row {
+  font-size:12px;
+  padding:3px 0;
+  color:var(--paper);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.qual-mark {
+  width:14px; height:14px;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  color:#fff;
+  font-weight:bold;
+}
+.qual-mark.ok { background:var(--success); }
+.qual-mark.no { background:var(--divider); color:var(--text-light); }
+
+.btn-submit {
+  margin:0 16px 16px;
+  background:var(--brass-gradient);
+  color:var(--primary);
+  text-align:center;
+  padding:14px;
+  border-radius:3px;
+  font-size:14px;
+  font-weight:600;
+  border:none;
+  cursor:pointer;
+  width:calc(100% - 32px);
+  box-shadow: 0 4px 16px rgba(201,169,110,0.4);
+}
+
+/* ===== Screen 7: 租赁 ===== */
+.rental-list { padding:16px; padding-bottom:80px; }
+.rental-card {
+  background:var(--card);
+  border-radius:3px;
+  padding:14px;
+  margin-bottom:12px;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+}
+.rental-head {
+  display:flex;
+  gap:12px;
+  margin-bottom:10px;
+}
+.rental-img {
+  width:72px; height:72px;
+  border-radius:3px;
+  background:var(--brass-gradient);
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Playfair Display', serif;
+  font-size:11px;
+  color:var(--primary);
+  font-weight:700;
+  text-align:center;
+  line-height:1.2;
+  padding:4px;
+}
+.rental-info { flex:1; }
+.rental-name { font-size:14px; font-weight:600; margin-bottom:4px; }
+.rental-status {
+  display:inline-block;
+  font-size:10px;
+  padding:2px 8px;
+  border-radius:3px;
+  margin-bottom:4px;
+}
+.rental-status.shoot { background:rgba(107,142,90,0.2); color:var(--success); }
+.rental-status.wait { background:rgba(201,169,110,0.2); color:var(--brass); }
+.rental-status.done { background:rgba(154,144,128,0.2); color:var(--text-light); }
+.rental-msg { font-size:11px; color:var(--text-light); }
+
+.rental-actions {
+  display:flex;
+  gap:6px;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid var(--divider);
+}
+.btn-sm {
+  flex:1;
+  background:transparent;
+  border:1px solid var(--brass);
+  color:var(--brass);
+  padding:7px;
+  border-radius:3px;
+  font-size:12px;
+  cursor:pointer;
+}
+.btn-sm.primary {
+  background:var(--brass-gradient);
+  color:var(--primary);
+  border:none;
+}
+
+/* Toast */
+.toast {
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  background:rgba(0,0,0,0.85);
+  color:var(--paper);
+  padding:12px 24px;
+  border-radius:3px;
+  font-size:13px;
+  z-index:100;
+  border-top:2px solid;
+  border-image: var(--brass-gradient) 1;
+  animation: fadein 0.3s;
+}
+@keyframes fadein { from {opacity:0;} to {opacity:1;} }
+
+/* 隐藏 */
+#price-year { display:none; }
+</style>
+<link rel="stylesheet" href="../shared/filmer-v3.css">
+</head>
+<body data-module="profile">
+<div class="app-container">
+
+<!-- ============== Screen 1: 我的 ============== -->
+<div class="screen active" id="screen-mine">
+  <div class="topbar">
+    <div class="left"></div>
+    <div class="title">我 的</div>
+    <div class="right">
+      <div class="icon-btn" onclick="alert('草稿箱')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+      </div>
+      <div class="icon-btn" onclick="showScreen('screen-member-center')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="user-card">
+    <div class="avatar">李</div>
+    <div class="user-info">
+      <div class="user-name">
+        <span>李在在</span>
+        <span class="badge-silver">银会员</span>
+      </div>
+      <div class="user-id">ID: 1002837 · 134 粉丝</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="stat-num">124</div>
+      <div class="stat-label">关注</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">2.3k</div>
+      <div class="stat-label">粉丝</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">8</div>
+      <div class="stat-label">发卷</div>
+    </div>
+  </div>
+
+  <div class="member-entry" onclick="showScreen('screen-member-center')">
+    <div class="member-entry-row">
+      <div>
+        <div class="member-level">银会员</div>
+        <div class="member-saved">还剩 87 天 · 累计节省 ¥168</div>
+      </div>
+      <button class="btn-renew">立即续费</button>
+    </div>
+  </div>
+
+  <div class="section-title">我的订单</div>
+  <div class="order-row">
+    <div class="order-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+      <div class="order-item-label">全部</div>
+    </div>
+    <div class="order-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>
+      <div class="order-item-label">待支付</div>
+      <div class="order-badge">1</div>
+    </div>
+    <div class="order-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 7l9 6 9-6M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/></svg>
+      <div class="order-item-label">待发货</div>
+      <div class="order-badge">2</div>
+    </div>
+    <div class="order-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M5 17h14l-1.5-9H6.5L5 17zM5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0"/></svg>
+      <div class="order-item-label">待收货</div>
+    </div>
+    <div class="order-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <div class="order-item-label">待评价</div>
+    </div>
+  </div>
+
+  <div class="menu-list">
+    <div class="menu-group-title" data-profile-group="content">内容资产</div>
+    <div class="menu-item" onclick="showScreen('screen-my-films')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+      <span>我的胶卷</span>
+      <span class="menu-tag">爱藏</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="menu-item" onclick="showScreen('screen-favorites')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <span>我的收藏</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="menu-group-title" data-profile-group="transaction">交易服务</div>
+    <div class="menu-item" onclick="showScreen('screen-my-rentals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3"/></svg>
+      <span>我的租赁</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="menu-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M9 2v6M15 2v6M3 8h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 12h18"/></svg>
+      <span>冲扫委托</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="menu-group-title" data-profile-group="creator">创作者服务</div>
+    <div class="menu-item" onclick="showScreen('screen-kol-apply')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+      <span>KOL 入驻</span>
+      <span class="menu-tag">创作者</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="menu-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+      <span>帮助与反馈</span>
+      <span class="arrow">›</span>
+    </div>
+    <div class="menu-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>关于 Filmer</span>
+      <span class="arrow">›</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============== Screen 2: 会员中心 ============== -->
+<div class="screen" id="screen-member-center">
+  <div class="topbar">
+    <div class="left">
+      <div class="icon-btn" onclick="showScreen('screen-mine')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+    </div>
+    <div class="title">会员中心</div>
+    <div class="right">
+      <div class="icon-btn">
+        <span style="font-size:13px; color:var(--brass);">规则</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="member-hero">
+    <div class="hero-label">CURRENT TIER</div>
+    <div class="hero-level">银会员</div>
+    <div class="hero-row">
+      <div class="hero-date">到期 2026-10-21</div>
+      <div class="hero-saved">
+        <div class="hero-saved-num">¥168</div>
+        <div class="hero-saved-label">累计节省</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="benefits-row">
+    <div class="benefit-item">
+      <div class="benefit-num">9.5折</div>
+      <div class="benefit-label">商城</div>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-num">¥20</div>
+      <div class="benefit-label">冲扫券/月</div>
+    </div>
+    <div class="benefit-item">
+      <div class="benefit-num">1张</div>
+      <div class="benefit-label">免押券/月</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-outline" onclick="showScreen('screen-member-upgrade')">升级金会员</button>
+    <button class="btn-primary" onclick="showScreen('screen-member-upgrade')">立即续费</button>
+  </div>
+
+  <div class="section-title">等级权益对比</div>
+  <div class="tier-table">
+    <div class="tier-row header">
+      <div class="tier-cell">免费用户</div>
+      <div class="tier-cell brass">银会员</div>
+      <div class="tier-cell brass">金会员</div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-cell">无折扣</div>
+      <div class="tier-cell">9.5折</div>
+      <div class="tier-cell">9折</div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-cell">无</div>
+      <div class="tier-cell">¥20/月</div>
+      <div class="tier-cell">¥50/月</div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-cell">无</div>
+      <div class="tier-cell">1张/月</div>
+      <div class="tier-cell">3张/月</div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-cell">无</div>
+      <div class="tier-cell">—</div>
+      <div class="tier-cell">专属客服</div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-cell">无</div>
+      <div class="tier-cell">—</div>
+      <div class="tier-cell">优先租赁</div>
+    </div>
+  </div>
+
+  <div class="section-title">权益使用记录</div>
+  <div class="usage-list">
+    <div class="usage-item">
+      <div>
+        <div>冲扫券 · 胶卷冲扫 135/36</div>
+        <div class="usage-date">2026-07-18</div>
+      </div>
+      <div style="color:var(--brass);">-¥20</div>
+    </div>
+    <div class="usage-item">
+      <div>
+        <div>商城折扣 · Kodak Portra 400</div>
+        <div class="usage-date">2026-07-12</div>
+      </div>
+      <div style="color:var(--brass);">-¥12</div>
+    </div>
+    <div class="usage-item">
+      <div>
+        <div>免押券 · 相机租赁</div>
+        <div class="usage-date">2026-06-30</div>
+      </div>
+      <div style="color:var(--brass);">-¥300</div>
+    </div>
+    <div class="usage-item">
+      <div>
+        <div>冲扫券 · Velvia 50</div>
+        <div class="usage-date">2026-06-15</div>
+      </div>
+      <div style="color:var(--brass);">-¥20</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== Screen 3: 升级页 ============== -->
+<div class="screen" id="screen-member-upgrade">
+  <div class="topbar">
+    <div class="left">
+      <div class="icon-btn" onclick="showScreen('screen-member-center')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+    </div>
+    <div class="title">开通会员</div>
+    <div class="right"></div>
+  </div>
+
+  <div class="upgrade-hero">
+    <div class="upgrade-title">成为 Filmer 会员</div>
+    <div class="upgrade-sub">解锁专属胶片生活方式</div>
+  </div>
+
+  <div class="pay-tabs">
+    <div class="pay-type active" onclick="setPayType(this,'month')">月付</div>
+    <div class="pay-type" onclick="setPayType(this,'year')">年付<span class="pay-discount">省25%</span></div>
+  </div>
+
+  <!-- 月付价格 -->
+  <div id="price-month">
+    <div class="plan-card">
+      <div class="plan-header">
+        <div class="plan-name">银会员</div>
+        <div class="plan-price">¥29<small>/月</small></div>
+      </div>
+      <ul class="benefits-list">
+        <li>商城全场 9.5 折</li>
+        <li>每月 ¥20 冲扫券</li>
+        <li>每月 1 张免押券</li>
+        <li>专属会员标识</li>
+        <li>会员日双倍积分</li>
+      </ul>
+      <button class="btn-primary" style="width:100%;" onclick="showToast('开通成功')">立即开通</button>
+    </div>
+
+    <div class="plan-card gold">
+      <div class="plan-recommend">推荐</div>
+      <div class="plan-header">
+        <div class="plan-name">金会员</div>
+        <div class="plan-price">¥79<small>/月</small></div>
+      </div>
+      <ul class="benefits-list">
+        <li>商城全场 9 折</li>
+        <li>每月 ¥50 冲扫券</li>
+        <li>每月 3 张免押券</li>
+        <li>专属客服 1V1</li>
+        <li>优先租赁热门相机</li>
+        <li>KOL 申请加权</li>
+      </ul>
+      <button class="btn-primary" style="width:100%;" onclick="showToast('开通成功')">立即开通</button>
+    </div>
+  </div>
+
+  <!-- 年付价格 -->
+  <div id="price-year">
+    <div class="plan-card">
+      <div class="plan-header">
+        <div class="plan-name">银会员</div>
+        <div class="plan-price">¥259<small>/年</small></div>
+      </div>
+      <ul class="benefits-list">
+        <li>商城全场 9.5 折</li>
+        <li>每月 ¥20 冲扫券</li>
+        <li>每月 1 张免押券</li>
+        <li>专属会员标识</li>
+        <li>会员日双倍积分</li>
+      </ul>
+      <button class="btn-primary" style="width:100%;" onclick="showToast('开通成功')">立即开通</button>
+    </div>
+
+    <div class="plan-card gold">
+      <div class="plan-recommend">推荐</div>
+      <div class="plan-header">
+        <div class="plan-name">金会员</div>
+        <div class="plan-price">¥699<small>/年</small></div>
+      </div>
+      <ul class="benefits-list">
+        <li>商城全场 9 折</li>
+        <li>每月 ¥50 冲扫券</li>
+        <li>每月 3 张免押券</li>
+        <li>专属客服 1V1</li>
+        <li>优先租赁热门相机</li>
+        <li>KOL 申请加权</li>
+      </ul>
+      <button class="btn-primary" style="width:100%;" onclick="showToast('开通成功')">立即开通</button>
+    </div>
+  </div>
+
+  <div class="agreement">
+    <div class="checkbox checked" id="agreeBox" onclick="this.classList.toggle('checked')"></div>
+    <div>
+      我已阅读并同意《Filmer 会员服务协议》《自动续费规则》，开通后将通过微信支付自动续费。
+    </div>
+  </div>
+</div>
+
+<!-- ============== Screen 4: 我的胶卷 ============== -->
+<div class="screen" id="screen-my-films">
+  <div class="topbar">
+    <div class="left">
+      <div class="icon-btn" onclick="showScreen('screen-mine')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+    </div>
+    <div class="title">我的胶卷</div>
+    <div class="right"></div>
+  </div>
+
+  <div class="tabs-row">
+    <div class="tab-item active">全部</div>
+    <div class="tab-item">持有中</div>
+    <div class="tab-item">已用完</div>
+    <div class="tab-item">寄售中</div>
+  </div>
+
+  <div class="film-list">
+    <div class="film-item">
+      <div class="film-thumb"></div>
+      <div class="film-info">
+        <div class="film-name">Kodak Portra 400 × 3 卷</div>
+        <div class="film-meta">
+          <span class="status-tag status-hold">持有中</span>
+          <span>2026-07-10 添加</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="film-item">
+      <div class="film-thumb"></div>
+      <div class="film-info">
+        <div class="film-name">Velvia 50 × 1 卷</div>
+        <div class="film-meta">
+          <span class="status-tag status-shoot">已拍完待冲扫</span>
+          <span>2026-07-05 添加</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="film-item">
+      <div class="film-thumb"></div>
+      <div class="film-info">
+        <div class="film-name">HP5 Plus × 2 卷</div>
+        <div class="film-meta">
+          <span class="status-tag status-hold">持有中</span>
+          <span>2026-06-28 添加</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="film-item">
+      <div class="film-thumb"></div>
+      <div class="film-info">
+        <div class="film-name">Cinestill 800T × 1 卷</div>
+        <div class="film-meta">
+          <span class="status-tag status-done">已用完</span>
+          <span>2026-06-15 添加</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="fab">+ 登记新胶卷</button>
+</div>
+
+<!-- ============== Screen 5: 收藏 ============== -->
+<div class="screen" id="screen-favorites">
+  <div class="topbar">
+    <div class="left">
+      <div class="icon-btn" onclick="showScreen('screen-mine')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+    </div>
+    <div class="title">我的收藏</div>
+    <div class="right"></div>
+  </div>
+
+  <div class="tabs-row">
+    <div class="tab-item active">笔记</div>
+    <div class="tab-item">胶卷</div>
+    <div class="tab-item">相机</div>
+    <div class="tab-item">冲扫店</div>
+  </div>
+
+  <div class="fav-grid">
+    <div class="fav-card c1"></div>
+    <div class="fav-card c2"></div>
+    <div class="fav-card c3"></div>
+    <div class="fav-card c4"></div>
+    <div class="fav-card c5"></div>
+    <div class="fav-card c6"></div>
+  </div>
+</div>
+
+<!-- ============== Screen 6: KOL 申请 ============== -->
+<div class="screen" id="screen-kol-apply">
+  <div class="topbar">
+    <div class="left">
+      <div class="icon-btn" onclick="showScreen('screen-mine')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+    </div>
+    <div class="title">KOL 入驻</div>
+    <div class="right"></div>
+  </div>
+
+  <div class="kol-banner">
+    成为 Filmer 认证摄影师，解锁流量加权与商业合作
+  </div>
+
+  <div class="form-section">
+    <div class="form-item">
+      <label class="form-label">真实姓名<span class="req">*</span></label>
+      <input class="form-input" placeholder="请输入真实姓名">
+    </div>
+
+    <div class="form-item">
+      <label class="form-label">手机号<span class="req">*</span></label>
+      <input class="form-input" placeholder="11 位手机号">
+    </div>
+
+    <div class="form-item">
+      <label class="form-label">所在城市</label>
+      <input class="form-input" value="上海">
+    </div>
+
+    <div class="form-item">
+      <label class="form-label">常用胶卷（多选）</label>
+      <div class="chip-group">
+        <div class="chip" onclick="toggleChip(this)">Portra 400</div>
+        <div class="chip" onclick="toggleChip(this)">Portra 800</div>
+        <div class="chip" onclick="toggleChip(this)">Velvia 50</div>
+        <div class="chip" onclick="toggleChip(this)">HP5 Plus</div>
+        <div class="chip" onclick="toggleChip(this)">Cinestill 800T</div>
+        <div class="chip" onclick="toggleChip(this)">Ektar 100</div>
+        <div class="chip" onclick="toggleChip(this)">Provia 100F</div>
+      </div>
+    </div>
+
+    <div class="form-item">
+      <label class="form-label">常用相机（多选）</label>
+      <div class="chip-group">
+        <div class="chip" onclick="toggleChip(this)">哈苏 500CM</div>
+        <div class="chip" onclick="toggleChip(this)">徕卡 M6</div>
+        <div class="chip" onclick="toggleChip(this)">Contax T2</div>
+        <div class="chip" onclick="toggleChip(this)">Pentax 67</div>
+        <div class="chip" onclick="toggleChip(this)">Mamiya 7</div>
+        <div class="chip" onclick="toggleChip(this)">Nikon FM2</div>
+      </div>
+    </div>
+
+    <div class="form-item">
+      <label class="form-label">代表作品（选 3-10 个笔记）</label>
+      <div class="work-pick">+ 选择作品</div>
+    </div>
+
+    <div class="form-item">
+      <label class="form-label">个人简介</label>
+      <textarea class="form-textarea" placeholder="介绍一下你的胶片摄影经历与风格..."></textarea>
+    </div>
+
+    <div class="form-item">
+      <label class="form-label">社交账号</label>
+      <input class="form-input" placeholder="小红书账号 / URL">
+    </div>
+  </div>
+
+  <div class="qual-box">
+    <div class="qual-title">申请条件</div>
+    <div class="qual-row">
+      <span class="qual-mark ok">✓</span>
+      粉丝数 ≥ 500（当前 2,341）
+    </div>
+    <div class="qual-row">
+      <span class="qual-mark ok">✓</span>
+      发布笔记 ≥ 10 篇（当前 18 篇）
+    </div>
+    <div class="qual-row">
+      <span class="qual-mark ok">✓</span>
+      ≥10 篇笔记 ≥50 赞（当前 12 篇）
+    </div>
+  </div>
+
+  <button class="btn-submit" onclick="submitKol()">提交申请</button>
+</div>
+
+<!-- ============== Screen 7: 租赁 ============== -->
+<div class="screen" id="screen-my-rentals">
+  <div class="topbar">
+    <div class="left">
+      <div class="icon-btn" onclick="showScreen('screen-mine')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+    </div>
+    <div class="title">我的租赁</div>
+    <div class="right"></div>
+  </div>
+
+  <div class="tabs-row">
+    <div class="tab-item active">全部</div>
+    <div class="tab-item">待发货</div>
+    <div class="tab-item">拍摄中</div>
+    <div class="tab-item">待归还</div>
+    <div class="tab-item">已完成</div>
+  </div>
+
+  <div class="rental-list">
+    <div class="rental-card">
+      <div class="rental-head">
+        <div class="rental-img">M6</div>
+        <div class="rental-info">
+          <div class="rental-name">徕卡 M6 · 银色</div>
+          <span class="rental-status shoot">拍摄中</span>
+          <div class="rental-msg">归还倒计时 2 天</div>
+          <div class="rental-msg">订单号 R2607-0012</div>
+        </div>
+      </div>
+      <div class="rental-actions">
+        <button class="btn-sm primary">去归还</button>
+        <button class="btn-sm">续租</button>
+        <button class="btn-sm">联系客服</button>
+      </div>
+    </div>
+
+    <div class="rental-card">
+      <div class="rental-head">
+        <div class="rental-img">500CM</div>
+        <div class="rental-info">
+          <div class="rental-name">哈苏 500CM · 标配套装</div>
+          <span class="rental-status wait">待发货</span>
+          <div class="rental-msg">预计 07-22 发出</div>
+          <div class="rental-msg">订单号 R2607-0025</div>
+        </div>
+      </div>
+      <div class="rental-actions">
+        <button class="btn-sm primary">查看物流</button>
+        <button class="btn-sm">修改地址</button>
+        <button class="btn-sm">取消订单</button>
+      </div>
+    </div>
+
+    <div class="rental-card">
+      <div class="rental-head">
+        <div class="rental-img">T2</div>
+        <div class="rental-info">
+          <div class="rental-name">Contax T2 · 钛黑</div>
+          <span class="rental-status done">已完成</span>
+          <div class="rental-msg">已归还 7 天前</div>
+          <div class="rental-msg">订单号 R2606-0089</div>
+        </div>
+      </div>
+      <div class="rental-actions">
+        <button class="btn-sm primary">去评价</button>
+        <button class="btn-sm">再次租赁</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector('.app-container').scrollTop = 0;
+}
+
+function setPayType(el, type) {
+  el.parentElement.querySelectorAll('.pay-type').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('price-month').style.display = type === 'month' ? 'block' : 'none';
+  document.getElementById('price-year').style.display = type === 'year' ? 'block' : 'none';
+}
+
+function toggleChip(el) {
+  el.classList.toggle('active');
+}
+
+function checkKolQualification() {
+  // 模拟实时校验
+}
+
+function submitKol() {
+  showToast('申请已提交，3 个工作日内审核');
+  setTimeout(() => showScreen('screen-mine'), 1500);
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+</script>
+<script src="../shared/filmer-v3.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+.page { padding: 16px; }
+.hero { padding: 32px 0; text-align: center; }
+.nickname { display: block; font-size: 22px; font-weight: 700; color: #EDE5D8; }
+.uid { display: block; color: #9A9080; font-size: 12px; margin-top: 8px; }
+.role { display: block; color: #C9A96E; font-size: 11px; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+.actions { padding: 16px 0; }
+.btn { padding: 14px; border-radius: 4px; text-align: center; margin: 8px 0; font-weight: 600; }
+.btn.primary { background: linear-gradient(135deg, #D4B578, #B8944F); color: #141210; }
+.btn.ghost { border: 1px solid #3A3530; color: #9A9080; }

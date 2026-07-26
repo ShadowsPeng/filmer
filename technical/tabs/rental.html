@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Filmer — Rental</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#141210;--card:#1E1B17;--paper:#EDE5D8;
+  --brass:#C9A96E;--brass-light:#D4B578;--brass-dark:#B8944F;
+  --kodak:#C25B2B;--text-light:#9A9080;--divider:#3A3530;
+  --bg-darker:#0D0B09;--success:#6B8E5A;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#000}
+body{
+  display:flex;justify-content:center;align-items:flex-start;
+  min-height:100vh;padding:20px 0;
+  font-family:'Inter','Noto Sans SC',sans-serif;color:var(--paper);
+  font-size:14px;line-height:1.5;
+}
+.app-container{
+  width:375px;height:812px;background:var(--primary);
+  position:relative;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,0,0,0.6);
+}
+.screen{
+  display:none;width:375px;height:812px;overflow-y:auto;overflow-x:hidden;
+  position:absolute;top:0;left:0;background:var(--primary);padding-bottom:20px;
+}
+.screen.active{display:block}
+.screen::-webkit-scrollbar{width:0}
+
+/* Vignette helper */
+.vignette{position:relative;overflow:hidden}
+.vignette::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.4) 100%);
+  z-index:1;
+}
+.vignette>*{position:relative;z-index:0}
+
+/* Top bar */
+.top-bar{
+  height:48px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;position:sticky;top:0;background:var(--primary);z-index:20;
+  border-bottom:1px solid var(--divider);
+}
+.top-bar .icon-btn{
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--paper);
+}
+.top-bar .title{
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;
+  color:var(--paper);
+}
+.top-bar .right{display:flex;gap:4px}
+
+/* Tabs */
+.tab-bar{
+  display:flex;padding:0 16px;gap:24px;border-bottom:1px solid var(--divider);
+  background:var(--primary);position:sticky;top:48px;z-index:15;
+}
+.tab-item{
+  padding:12px 0;font-size:14px;color:var(--text-light);
+  position:relative;cursor:pointer;font-weight:500;
+}
+.tab-item.active{color:var(--paper)}
+.tab-item.active::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;
+  background:var(--brass);
+}
+
+/* Filter chips */
+.filter-bar{
+  display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;
+}
+.filter-bar::-webkit-scrollbar{display:none}
+.chip{
+  padding:6px 14px;background:var(--card);border-radius:3px;font-size:12px;
+  color:var(--text-light);cursor:pointer;white-space:nowrap;
+  border:1px solid var(--divider);
+}
+.chip.active{color:var(--brass);border-color:var(--brass);background:rgba(201,169,110,0.08)}
+
+/* Card base */
+.card{
+  background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);position:relative;overflow:hidden;
+}
+
+/* Thumb */
+.thumb{
+  width:100%;aspect-ratio:1;background:linear-gradient(135deg,#2a2520 0%,#141210 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-weight:700;color:var(--brass);
+  letter-spacing:3px;text-align:center;position:relative;overflow:hidden;
+}
+.thumb::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 30%,rgba(201,169,110,0.18),transparent 60%);
+}
+.thumb .label-s{font-size:9px;letter-spacing:1px;color:var(--text-light);display:block;margin-top:4px;font-family:'Inter',sans-serif;font-weight:400}
+
+/* Brand label sizes */
+.thumb.leica{font-size:20px}
+.thumb.hasselblad{font-size:11px;letter-spacing:1px}
+.thumb.mamm{font-size:26px}
+.thumb.contax{font-size:18px}
+.thumb.portra{font-size:14px;color:var(--kodak);letter-spacing:2px}
+.thumb.velvia{font-size:16px;color:var(--success)}
+.thumb.hp5{font-size:18px}
+.thumb.ektar{font-size:16px;color:var(--kodak)}
+.thumb.cinestill{font-size:12px;letter-spacing:1px;color:var(--brass-light)}
+
+/* Scroll-x */
+.scroll-x{display:flex;gap:12px;overflow-x:auto;padding:0 16px;scrollbar-width:none}
+.scroll-x::-webkit-scrollbar{display:none}
+.scroll-x>*{flex-shrink:0}
+
+/* Section header */
+.section-h{display:flex;justify-content:space-between;align-items:center;padding:20px 16px 10px}
+.section-h .h{font-family:'Playfair Display',serif;font-size:16px;font-weight:700}
+.section-h .more{font-size:12px;color:var(--text-light);display:flex;align-items:center;gap:2px;cursor:pointer}
+
+/* Banner */
+.banner{
+  margin:12px 16px;padding:18px;
+  background:linear-gradient(135deg,rgba(201,169,110,0.18) 0%,rgba(201,169,110,0.04) 100%);
+  border:1px solid var(--brass);border-radius:3px;position:relative;overflow:hidden;
+}
+.banner::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);
+}
+.banner>*{position:relative}
+.banner .label{
+  font-size:11px;color:var(--brass);letter-spacing:2px;
+  text-transform:uppercase;font-weight:500;
+}
+.banner .title{
+  font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin:6px 0 10px;
+}
+.banner .price{font-size:28px;color:var(--brass);font-weight:700;font-family:'Playfair Display',serif}
+.banner .price small{font-size:14px;color:var(--text-light);font-weight:400;font-family:'Inter',sans-serif}
+.banner .desc{font-size:12px;color:var(--text-light);margin-top:10px;line-height:1.6}
+.banner .cta{
+  display:inline-flex;align-items:center;gap:6px;margin-top:14px;
+  padding:8px 16px;background:var(--brass);color:var(--bg-darker);
+  border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;
+}
+
+/* Tags */
+.tag{
+  display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;
+  background:rgba(201,169,110,0.12);color:var(--brass);
+  border:1px solid rgba(201,169,110,0.3);font-weight:500;
+}
+.tag.kodak{background:rgba(194,91,43,0.15);color:var(--kodak);border-color:rgba(194,91,43,0.4)}
+.tag.success{background:rgba(107,142,90,0.15);color:var(--success);border-color:rgba(107,142,90,0.4)}
+.tag.warn{background:rgba(154,144,128,0.12);color:var(--text-light);border-color:var(--divider)}
+.tag.brass{background:rgba(201,169,110,0.12);color:var(--brass);border-color:rgba(201,169,110,0.3)}
+
+/* Buttons */
+.btn{
+  padding:14px;background:var(--brass);color:var(--bg-darker);font-weight:600;
+  font-size:14px;border:none;border-radius:3px;cursor:pointer;width:100%;
+  font-family:'Inter','Noto Sans SC',sans-serif;
+}
+.btn.outline{background:transparent;color:var(--brass);border:1px solid var(--brass)}
+.btn.ghost{background:var(--card);color:var(--paper);border:1px solid var(--divider)}
+
+/* Bottom bar (sticky inside screen) */
+.bottom-bar{
+  position:sticky;bottom:0;background:var(--card);
+  border-top:1px solid var(--divider);padding:12px 16px;
+  display:flex;align-items:center;gap:12px;z-index:10;
+}
+.bottom-bar .info{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.bottom-bar .price{font-size:18px;font-weight:700;color:var(--brass);font-family:'Playfair Display',serif;line-height:1}
+.bottom-bar .meta{font-size:11px;color:var(--text-light)}
+.bottom-bar .btn{flex:0 0 auto;width:auto;padding:14px 24px}
+
+/* Toggle (checkbox) */
+.toggle{
+  width:18px;height:18px;border-radius:3px;border:1.5px solid var(--text-light);
+  display:inline-block;position:relative;cursor:pointer;flex-shrink:0;
+  background:transparent;
+}
+.toggle.active{background:var(--brass);border-color:var(--brass)}
+.toggle.active::after{
+  content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:var(--bg-darker);font-size:11px;font-weight:700;
+}
+
+/* Timeline */
+.tl-item{display:flex;gap:12px;padding:10px 16px;position:relative}
+.tl-item .dot{
+  width:10px;height:10px;border-radius:50%;background:var(--divider);
+  margin-top:6px;flex-shrink:0;position:relative;z-index:2;
+}
+.tl-item .dot.done{background:var(--success)}
+.tl-item .dot.current{background:var(--brass);box-shadow:0 0 0 4px rgba(201,169,110,0.25)}
+.tl-item .line{
+  position:absolute;left:21px;top:26px;bottom:-10px;width:1px;background:var(--divider);
+}
+.tl-item:last-child .line{display:none}
+.tl-item .time{font-size:11px;color:var(--text-light)}
+.tl-item .label{font-size:13px;color:var(--paper);margin-top:2px}
+.tl-item.current .label{color:var(--brass);font-weight:600}
+.tl-item.future .label,.tl-item.future .time{color:var(--text-light)}
+
+/* Spec row */
+.spec-row{
+  display:flex;justify-content:space-between;padding:11px 0;
+  border-bottom:1px solid var(--divider);font-size:13px;
+}
+.spec-row .k{color:var(--text-light)}
+.spec-row .v{color:var(--paper);font-weight:500}
+.spec-row:last-child{border-bottom:none}
+
+/* Order item card */
+.order-card{margin:0 16px 12px;padding:14px}
+.order-card .head{display:flex;justify-content:space-between;margin-bottom:10px;align-items:center}
+.order-card .head .id{font-size:11px;color:var(--text-light)}
+.order-card .status{font-size:12px;color:var(--brass);font-weight:600}
+.order-card .body{display:flex;gap:12px;align-items:center}
+.order-card .body .thumb{width:64px;height:64px;aspect-ratio:1;border-radius:3px;flex-shrink:0;font-size:9px;letter-spacing:1px}
+.order-card .info{flex:1;min-width:0}
+.order-card .name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700}
+.order-card .meta{font-size:12px;color:var(--text-light);margin-top:4px;line-height:1.5}
+.order-card .actions{
+  display:flex;gap:8px;margin-top:12px;border-top:1px solid var(--divider);
+  padding-top:12px;
+}
+.order-card .actions .btn{flex:1;padding:9px;font-size:12px}
+
+/* Camera list card (vertical) */
+.cam-card{
+  display:flex;gap:12px;margin:0 16px 12px;padding:12px;
+  background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);position:relative;overflow:hidden;
+}
+.cam-card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.4) 100%);
+}
+.cam-card>*{position:relative}
+.cam-card .thumb{
+  width:96px;height:96px;flex-shrink:0;aspect-ratio:1;font-size:11px;
+}
+.cam-card .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+.cam-card .name{font-family:'Playfair Display',serif;font-size:16px;font-weight:700}
+.cam-card .params{font-size:12px;color:var(--text-light);margin-top:3px;line-height:1.5}
+.cam-card .tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.cam-card .price-row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:8px}
+.cam-card .price{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--brass);line-height:1}
+.cam-card .price small{font-size:11px;color:var(--text-light);font-weight:400;font-family:'Inter',sans-serif}
+.cam-card .deposit{font-size:11px;color:var(--text-light)}
+.cam-card .status-row{
+  display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text-light);
+}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:rgba(30,27,23,0.95);color:var(--paper);padding:10px 20px;
+  border-radius:3px;font-size:13px;border:1px solid var(--brass);z-index:999;
+  animation:toastIn 0.2s ease-out;backdrop-filter:blur(8px);
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Horizontal card */
+.h-card{
+  width:156px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);overflow:hidden;position:relative;
+}
+.h-card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.4) 100%);
+}
+.h-card>*{position:relative}
+.h-card .thumb{aspect-ratio:1;font-size:14px}
+.h-card .body{padding:10px}
+.h-card .name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700}
+.h-card .meta{font-size:11px;color:var(--text-light);margin:4px 0 8px;line-height:1.4}
+.h-card .price-row{display:flex;justify-content:space-between;align-items:center}
+.h-card .price{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--brass)}
+.h-card .badge{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--success)}
+
+/* City picker */
+.city-picker{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:600;cursor:pointer}
+.city-picker svg{transition:transform 0.2s}
+
+/* Detail top bar - solid background */
+.top-bar.solid{background:var(--primary);border-bottom-color:transparent}
+
+/* Carousel */
+.carousel{margin:0 16px}
+.carousel .main{
+  aspect-ratio:4/3;border-radius:3px;overflow:hidden;position:relative;
+  background:linear-gradient(135deg,#2a2520 0%,#0d0b09 100%);
+  display:flex;align-items:center;justify-content:center;
+  border-top:2px solid rgba(201,169,110,0.2);
+}
+.carousel .main::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 30%,rgba(201,169,110,0.18),transparent 60%);
+}
+.carousel .main-text{
+  font-family:'Playfair Display',serif;font-size:38px;font-weight:700;
+  color:var(--brass);letter-spacing:8px;position:relative;
+}
+.carousel .page{
+  position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.5);
+  color:var(--paper);padding:4px 10px;border-radius:3px;font-size:11px;
+  backdrop-filter:blur(4px);
+}
+.carousel .thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.carousel .thumbs::-webkit-scrollbar{display:none}
+.carousel .thumb-s{
+  width:60px;height:60px;border-radius:3px;flex-shrink:0;
+  background:linear-gradient(135deg,#2a2520,#141210);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:9px;color:var(--brass);
+  border:1.5px solid var(--divider);position:relative;overflow:hidden;
+}
+.carousel .thumb-s.active{border-color:var(--brass)}
+
+/* Reviews */
+.review-card{
+  padding:14px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);margin-bottom:10px;
+  position:relative;overflow:hidden;
+}
+.review-card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.review-card>*{position:relative}
+.review-card .h{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.review-card .avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--brass),var(--brass-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:600;font-size:13px;color:var(--bg-darker);flex-shrink:0;
+}
+.review-card .uname{font-size:13px;font-weight:500}
+.review-card .stars{color:var(--brass);font-size:12px;margin-top:2px}
+.review-card .text{font-size:13px;line-height:1.6;color:var(--paper)}
+.review-card .date{font-size:11px;color:var(--text-light);margin-top:8px}
+
+/* Note (related) */
+.note-card{
+  width:200px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);overflow:hidden;position:relative;
+}
+.note-card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.note-card>*{position:relative}
+.note-card .cover{
+  height:110px;background:linear-gradient(135deg,#2a2520,#141210);
+  position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+}
+.note-card .cover::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 30%,rgba(201,169,110,0.15),transparent 60%);
+}
+.note-card .cover-icon{color:var(--brass);font-family:'Playfair Display',serif;font-size:24px;letter-spacing:2px}
+.note-card .body{padding:10px}
+.note-card .title{font-size:13px;font-weight:500;line-height:1.5}
+.note-card .author{font-size:11px;color:var(--text-light);margin-top:6px;display:flex;align-items:center;gap:4px}
+
+/* Price block */
+.price-block{
+  margin:12px 16px;padding:14px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);position:relative;overflow:hidden;
+}
+.price-block::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.price-block>*{position:relative}
+.price-block .row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
+.price-block .row .k{color:var(--text-light)}
+.price-block .row .v{color:var(--paper);font-weight:500}
+.price-block .row.main .v{font-family:'Playfair Display',serif;font-size:24px;color:var(--brass);font-weight:700}
+.price-block .row.main .v small{font-size:12px;color:var(--text-light);font-weight:400;font-family:'Inter',sans-serif}
+
+/* Owner block */
+.owner{
+  margin:0 16px 12px;padding:12px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);display:flex;align-items:center;gap:12px;
+  position:relative;overflow:hidden;
+}
+.owner::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.owner>*{position:relative}
+.owner .avatar{
+  width:40px;height:40px;border-radius:3px;
+  background:linear-gradient(135deg,var(--brass),var(--brass-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:600;font-size:16px;color:var(--bg-darker);flex-shrink:0;
+  font-family:'Playfair Display',serif;
+}
+.owner .info{flex:1}
+.owner .name{font-size:14px;font-weight:600}
+.owner .meta{font-size:11px;color:var(--text-light);margin-top:2px}
+.owner .badge{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;
+  background:rgba(201,169,110,0.15);border:1px solid var(--brass);
+  color:var(--brass);font-size:11px;border-radius:3px;font-weight:500;
+}
+
+/* Order summary */
+.summary{
+  margin:0 16px 12px;padding:14px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);position:relative;overflow:hidden;
+}
+.summary::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.summary>*{position:relative}
+.summary .row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.summary .row .k{color:var(--text-light)}
+.summary .row .v{color:var(--paper);font-weight:500}
+.summary .total{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-top:12px;margin-top:8px;border-top:1px solid var(--divider);font-size:14px;
+}
+.summary .total .v{font-family:'Playfair Display',serif;font-size:24px;color:var(--brass);font-weight:700}
+.summary .total .v small{font-size:12px;color:var(--text-light);font-weight:400;font-family:'Inter',sans-serif}
+
+/* Address */
+.address{
+  margin:0 16px 12px;padding:14px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);display:flex;align-items:center;gap:12px;
+  position:relative;overflow:hidden;
+}
+.address::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.address>*{position:relative}
+.address .icon{
+  width:38px;height:38px;border-radius:3px;background:rgba(201,169,110,0.12);
+  display:flex;align-items:center;justify-content:center;color:var(--brass);flex-shrink:0;
+}
+.address .info{flex:1;min-width:0}
+.address .name{font-size:14px;font-weight:500}
+.address .addr{font-size:12px;color:var(--text-light);margin-top:2px;line-height:1.4}
+.address .arrow{color:var(--text-light);flex-shrink:0}
+
+/* Note input */
+.note-input{
+  margin:0 16px 12px;padding:14px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);display:flex;
+  align-items:center;justify-content:space-between;font-size:13px;color:var(--text-light);
+  position:relative;overflow:hidden;
+}
+.note-input::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.note-input>*{position:relative}
+
+/* Logistics */
+.logistics{
+  margin:0 16px 12px;padding:14px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);display:flex;align-items:center;gap:12px;
+  position:relative;overflow:hidden;
+}
+.logistics::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.logistics>*{position:relative}
+.logistics .icon{
+  width:36px;height:36px;border-radius:3px;background:rgba(201,169,110,0.12);
+  display:flex;align-items:center;justify-content:center;color:var(--brass);flex-shrink:0;
+}
+.logistics .info{flex:1}
+.logistics .name{font-size:14px;font-weight:500}
+.logistics .no{font-size:12px;color:var(--text-light);margin-top:2px;font-family:'Inter',monospace;letter-spacing:1px}
+
+/* Info rows (key-value list) */
+.info-row{
+  display:flex;justify-content:space-between;padding:12px 16px;
+  border-bottom:1px solid var(--divider);font-size:13px;
+}
+.info-row:last-child{border-bottom:none}
+.info-row .k{color:var(--text-light)}
+.info-row .v{color:var(--paper);font-weight:500}
+.info-row .v.brass{color:var(--brass)}
+
+/* Product snapshot */
+.snap{
+  margin:0 16px 12px;padding:14px;background:var(--card);border-radius:3px;
+  border-top:2px solid rgba(201,169,110,0.2);display:flex;gap:12px;align-items:center;
+  position:relative;overflow:hidden;
+}
+.snap::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%);
+}
+.snap>*{position:relative}
+.snap .thumb{width:72px;height:72px;aspect-ratio:1;flex-shrink:0;font-size:11px}
+.snap .name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700}
+.snap .meta{font-size:12px;color:var(--text-light);margin-top:4px;line-height:1.5}
+
+/* Action group */
+.action-group{display:flex;gap:8px;margin:0 16px 16px}
+.action-group .btn{flex:1;padding:11px;font-size:13px}
+
+/* Date input pill */
+.date-input{
+  display:flex;align-items:center;gap:6px;padding:6px 10px;
+  background:var(--bg-darker);border-radius:3px;
+  font-size:12px;color:var(--paper);cursor:pointer;border:1px solid var(--divider);
+}
+.date-input .days{
+  font-size:11px;color:var(--brass);padding:2px 6px;
+  border:1px solid var(--brass);border-radius:3px;font-weight:500;
+}
+
+/* Insurance row */
+.ins-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-light);cursor:pointer}
+
+/* Section title in detail */
+.section-title{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 16px 10px;
+}
+.section-title .h{font-family:'Playfair Display',serif;font-size:15px;font-weight:700}
+.section-title .h small{font-size:12px;color:var(--text-light);font-family:'Inter',sans-serif;font-weight:400;margin-left:6px}
+.section-title .action{font-size:12px;color:var(--brass);display:flex;align-items:center;gap:2px}
+
+/* Tabs for my rentals */
+.status-tabs{
+  display:flex;padding:0 16px;gap:20px;border-bottom:1px solid var(--divider);
+  background:var(--primary);position:sticky;top:48px;z-index:15;
+}
+
+/* Star rating */
+.rating{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--brass);font-weight:600}
+.rating .star{color:var(--brass)}
+
+/* Compact divider */
+.divider{height:1px;background:var(--divider);margin:0 16px}
+
+/* Inline meta */
+.meta-inline{font-size:12px;color:var(--text-light);line-height:1.6}
+.meta-inline .sep{padding:0 6px;color:var(--divider)}
+
+/* Deposit card highlight */
+.deposit-highlight{
+  background:linear-gradient(135deg,rgba(201,169,110,0.12),rgba(201,169,110,0.04));
+  border:1px solid rgba(201,169,110,0.4);
+}
+</style>
+<link rel="stylesheet" href="../shared/filmer-v3.css">
+</head>
+<body data-module="rental">
+
+<div class="app-container">
+
+  <!-- ============ Screen 1: Rental Home ============ -->
+  <div class="screen active" id="screen-rental-home">
+    <div class="top-bar">
+      <div class="city-picker" onclick="showToast('切换城市')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 22s-8-7.5-8-13a8 8 0 1 1 16 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="9" r="3"/></svg>
+        <span>上海</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="title">Filmer · 租赁</div>
+      <div class="search-btn" onclick="showScreen('screen-camera-detail');selectCamera(0)" title="搜索">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab-item active" onclick="setRentalTab(this,'screen-rental-home')">相机</div>
+      <div class="tab-item" onclick="setRentalTab(this,'screen-films-rental')">胶卷</div>
+      <div class="tab-item" onclick="setRentalTab(this,'screen-my-rentals')">我的订单</div>
+    </div>
+
+    <!-- Banner -->
+    <div class="banner" onclick="showScreen('screen-camera-detail');selectCamera(0)">
+      <div class="label">NEWBIE PACK · 新手尝鲜</div>
+      <div class="title">新手体验包</div>
+      <div class="price">¥299<small> 起</small></div>
+      <div class="desc">3 天入门相机 + 1 卷 Portra 400<br>+ 顺丰包邮 + 冲扫券</div>
+      <div class="cta">立即体验 →</div>
+    </div>
+
+    <!-- Recommended cameras -->
+    <div class="section-h">
+      <div class="h">推荐相机</div>
+      <div class="more" onclick="showScreen('screen-cameras')">查看更多
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+
+    <div class="scroll-x" style="margin-bottom:4px">
+      <div class="h-card" onclick="showScreen('screen-camera-detail');selectCamera(0)">
+        <div class="thumb leica">LEICA<span class="label-s">M6 · 旁轴</span></div>
+        <div class="body">
+          <div class="name">徕卡 M6</div>
+          <div class="meta">0.72 倍取景器 · 135 胶片</div>
+          <div class="price-row">
+            <div class="price">¥150<small style="font-size:11px;color:var(--text-light);font-weight:400">/天</small></div>
+            <div class="badge">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>可租
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card" onclick="showScreen('screen-camera-detail');selectCamera(1)">
+        <div class="thumb hasselblad">HASSELBLAD<span class="label-s">500CM · 中画幅</span></div>
+        <div class="body">
+          <div class="name">哈苏 500CM</div>
+          <div class="meta">6×6 中画幅 · 腰平取景</div>
+          <div class="price-row">
+            <div class="price">¥280<small style="font-size:11px;color:var(--text-light);font-weight:400">/天</small></div>
+            <div class="badge">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>可租
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card" onclick="showScreen('screen-camera-detail');selectCamera(2)">
+        <div class="thumb contax">CONTAX<span class="label-s">T2 · 紧凑</span></div>
+        <div class="body">
+          <div class="name">Contax T2</div>
+          <div class="meta">Sonnar 38mm · 钛金属机身</div>
+          <div class="price-row">
+            <div class="price">¥220<small style="font-size:11px;color:var(--text-light);font-weight:400">/天</small></div>
+            <div class="badge">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>可租
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popular films -->
+    <div class="section-h">
+      <div class="h">热门胶卷</div>
+      <div class="more" onclick="setRentalTab(document.querySelectorAll('.tab-item')[1],'screen-films-rental')">查看更多
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+
+    <div class="scroll-x" style="padding-bottom:24px">
+      <div class="h-card" onclick="showScreen('screen-films-rental')">
+        <div class="thumb portra">PORTRA<span class="label-s">400 · 彩色负片</span></div>
+        <div class="body">
+          <div class="name">Portra 400</div>
+          <div class="meta">ISO 400 · 36 张</div>
+          <div class="price-row">
+            <div class="price">¥25<small style="font-size:11px;color:var(--text-light);font-weight:400">/天</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card" onclick="showScreen('screen-films-rental')">
+        <div class="thumb velvia">VELVIA<span class="label-s">50 · 彩色反转</span></div>
+        <div class="body">
+          <div class="name">Velvia 50</div>
+          <div class="meta">ISO 50 · 36 张</div>
+          <div class="price-row">
+            <div class="price">¥35<small style="font-size:11px;color:var(--text-light);font-weight:400">/天</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-card" onclick="showScreen('screen-films-rental')">
+        <div class="thumb hp5">HP5<span class="label-s">PLUS · 黑白</span></div>
+        <div class="body">
+          <div class="name">HP5 Plus</div>
+          <div class="meta">ISO 400 · 36 张</div>
+          <div class="price-row">
+            <div class="price">¥12<small style="font-size:11px;color:var(--text-light);font-weight:400">/天</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Screen 2: Camera List ============ -->
+  <div class="screen" id="screen-cameras">
+    <div class="top-bar">
+      <div class="icon-btn" onclick="showScreen('screen-rental-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="title">相机库</div>
+      <div class="right">
+        <div class="icon-btn" onclick="showToast('筛选')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="chip active">全部品牌</div>
+      <div class="chip">徕卡</div>
+      <div class="chip">哈苏</div>
+      <div class="chip">富士</div>
+      <div class="chip">Contax</div>
+      <div class="chip">玛米亚</div>
+    </div>
+    <div class="filter-bar" style="padding-top:0">
+      <div class="chip active">画幅:全部</div>
+      <div class="chip">135 全画幅</div>
+      <div class="chip">120 中画幅</div>
+      <div class="chip">价格 ↓</div>
+    </div>
+
+    <!-- Camera list -->
+    <div style="padding-top:8px" id="camera-list">
+      <div class="cam-card" onclick="showScreen('screen-camera-detail');selectCamera(0)">
+        <div class="thumb leica">LEICA</div>
+        <div class="info">
+          <div>
+            <div class="name">徕卡 Leica M6</div>
+            <div class="params">0.72 倍取景器 · 旁轴黄斑 · 135 全画幅</div>
+            <div class="tags">
+              <span class="tag">95 新</span>
+              <span class="tag brass">旁轴</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥150<small>/天</small></div>
+                <div class="deposit">押金 ¥2000</div>
+              </div>
+              <span class="tag success">今日可租</span>
+            </div>
+            <div class="status-row">
+              <span>累计租赁 286 次</span>
+              <span>4.9 ★</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cam-card" onclick="showScreen('screen-camera-detail');selectCamera(1)">
+        <div class="thumb hasselblad">HASSEL-BLAD</div>
+        <div class="info">
+          <div>
+            <div class="name">哈苏 Hasselblad 500CM</div>
+            <div class="params">6×6 中画幅 · 腰平取景 · Zeiss 80mm</div>
+            <div class="tags">
+              <span class="tag">99 新</span>
+              <span class="tag brass">中画幅</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥280<small>/天</small></div>
+                <div class="deposit">押金 ¥5000</div>
+              </div>
+              <span class="tag success">今日可租</span>
+            </div>
+            <div class="status-row">
+              <span>累计租赁 142 次</span>
+              <span>4.9 ★</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cam-card" onclick="showScreen('screen-camera-detail');selectCamera(2)">
+        <div class="thumb mamm">MAMM</div>
+        <div class="info">
+          <div>
+            <div class="name">玛米亚 Mamiya RB67</div>
+            <div class="params">6×7 中画幅 · 双轨反光 · 机械快门</div>
+            <div class="tags">
+              <span class="tag">95 新</span>
+              <span class="tag brass">中画幅</span>
+              <span class="tag warn">重量级</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥220<small>/天</small></div>
+                <div class="deposit">押金 ¥4000</div>
+              </div>
+              <span class="tag warn">已租出</span>
+            </div>
+            <div class="status-row">
+              <span>累计租赁 87 次</span>
+              <span>4.8 ★</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cam-card" onclick="showScreen('screen-camera-detail');selectCamera(3)">
+        <div class="thumb contax">CONTAX</div>
+        <div class="info">
+          <div>
+            <div class="name">Contax T2</div>
+            <div class="params">Sonnar 38mm f/2.8 · 钛金属 · 135</div>
+            <div class="tags">
+              <span class="tag">99 新</span>
+              <span class="tag brass">紧凑</span>
+              <span class="tag kodak">热门</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥220<small>/天</small></div>
+                <div class="deposit">押金 ¥3500</div>
+              </div>
+              <span class="tag success">今日可租</span>
+            </div>
+            <div class="status-row">
+              <span>累计租赁 198 次</span>
+              <span>4.9 ★</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:24px 0;color:var(--text-light);font-size:12px">- 已加载全部 4 台 -</div>
+    </div>
+  </div>
+
+  <!-- ============ Screen 3: Film List ============ -->
+  <div class="screen" id="screen-films-rental">
+    <div class="top-bar">
+      <div class="icon-btn" onclick="showScreen('screen-rental-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="title">胶卷库</div>
+      <div class="right">
+        <div class="icon-btn" onclick="showToast('筛选')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="chip active">全部</div>
+      <div class="chip">彩色负片</div>
+      <div class="chip">彩色反转</div>
+      <div class="chip">黑白</div>
+    </div>
+    <div class="filter-bar" style="padding-top:0">
+      <div class="chip active">ISO:全部</div>
+      <div class="chip">低感 50-100</div>
+      <div class="chip">中感 200-400</div>
+      <div class="chip">高感 800+</div>
+    </div>
+
+    <div style="padding-top:8px">
+      <div class="cam-card">
+        <div class="thumb portra">PORTRA</div>
+        <div class="info">
+          <div>
+            <div class="name">Kodak Portra 400</div>
+            <div class="params">ISO 400 · 彩色负片 · 36 张<br>C-41 工艺 · 肤色表现优异</div>
+            <div class="tags">
+              <span class="tag kodak">kodak</span>
+              <span class="tag">热门</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥25<small>/卷</small></div>
+                <div class="deposit">押金 ¥150</div>
+              </div>
+              <span class="tag success">库存 12</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cam-card">
+        <div class="thumb velvia">VELVIA</div>
+        <div class="info">
+          <div>
+            <div class="name">Fujifilm Velvia 50</div>
+            <div class="params">ISO 50 · 彩色反转片 · 36 张<br>E-6 工艺 · 风光神器</div>
+            <div class="tags">
+              <span class="tag">fuji</span>
+              <span class="tag brass">专业</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥35<small>/卷</small></div>
+                <div class="deposit">押金 ¥200</div>
+              </div>
+              <span class="tag success">库存 6</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cam-card">
+        <div class="thumb hp5">HP5</div>
+        <div class="info">
+          <div>
+            <div class="name">Ilford HP5 Plus</div>
+            <div class="params">ISO 400 · 黑白负片 · 36 张<br>宽容度极佳 · 街拍首选</div>
+            <div class="tags">
+              <span class="tag">ilford</span>
+              <span class="tag warn">经典</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥12<small>/卷</small></div>
+                <div class="deposit">押金 ¥80</div>
+              </div>
+              <span class="tag success">库存 24</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cam-card">
+        <div class="thumb ektar">EKTAR</div>
+        <div class="info">
+          <div>
+            <div class="name">Kodak Ektar 100</div>
+            <div class="params">ISO 100 · 彩色负片 · 36 张<br>C-41 工艺 · 色彩饱和</div>
+            <div class="tags">
+              <span class="tag kodak">kodak</span>
+              <span class="tag">日光</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥22<small>/卷</small></div>
+                <div class="deposit">押金 ¥120</div>
+              </div>
+              <span class="tag success">库存 9</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cam-card">
+        <div class="thumb cinestill">CINESTILL</div>
+        <div class="info">
+          <div>
+            <div class="name">Cinestill 800T</div>
+            <div class="params">ISO 800 · 彩色电影片 · 36 张<br>夜景特化 · 独特 Halia 效应</div>
+            <div class="tags">
+              <span class="tag kodak">电影</span>
+              <span class="tag brass">夜景</span>
+            </div>
+          </div>
+          <div>
+            <div class="price-row">
+              <div>
+                <div class="price">¥45<small>/卷</small></div>
+                <div class="deposit">押金 ¥200</div>
+              </div>
+              <span class="tag success">库存 4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:24px 0;color:var(--text-light);font-size:12px">- 已加载全部 5 款 -</div>
+    </div>
+  </div>
+
+  <!-- ============ Screen 4: Camera Detail ============ -->
+  <div class="screen" id="screen-camera-detail">
+    <div class="top-bar solid">
+      <div class="icon-btn" onclick="showScreen('screen-cameras')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="title" id="detail-title">相机详情</div>
+      <div class="right">
+        <div class="icon-btn" onclick="showToast('已分享')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        </div>
+        <div class="icon-btn" onclick="toggleFav(this)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carousel -->
+    <div class="carousel">
+      <div class="main">
+        <div class="main-text" id="detail-main-text">LEICA</div>
+        <div class="page">1 / 5</div>
+      </div>
+      <div class="thumbs">
+        <div class="thumb-s active" onclick="pickThumb(this,'LEICA')">LEICA</div>
+        <div class="thumb-s" onclick="pickThumb(this,'机身')">机身</div>
+        <div class="thumb-s" onclick="pickThumb(this,'顶视')">顶视</div>
+        <div class="thumb-s" onclick="pickThumb(this,'取景')">取景</div>
+        <div class="thumb-s" onclick="pickThumb(this,'底盖')">底盖</div>
+      </div>
+    </div>
+
+    <section class="trust-strip" data-rental-trust aria-label="租赁保障">
+      <span><b>可租</b>7月24日起</span>
+      <span><b>押金</b>¥6,000</span>
+      <span><b>保障</b>含损坏险可选</span>
+      <span><b>验机</b>平台检测报告</span>
+    </section>
+
+    <!-- Core info -->
+    <div style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+          <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1.3" id="detail-name">徕卡 Leica M6</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:6px" id="detail-sub">0.72 倍取景器 · 旁轴黄斑 · 135 全画幅</div>
+        </div>
+        <span class="tag brass">95 新</span>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:14px;font-size:12px;color:var(--text-light)">
+        <span>累计租赁 <strong style="color:var(--paper)">286</strong> 次</span>
+        <span class="rating"><span class="star">★</span> 4.9</span>
+        <span>98% 好评</span>
+      </div>
+    </div>
+
+    <!-- Price block -->
+    <div class="price-block">
+      <div class="row main">
+        <div class="k">日租</div>
+        <div class="v">¥150<small>/天</small></div>
+      </div>
+      <div class="row">
+        <div class="k">押金（冻结）</div>
+        <div class="v">¥2000</div>
+      </div>
+      <div class="row">
+        <div class="k">损坏险（可选）</div>
+        <div class="v">¥10 / 天</div>
+      </div>
+    </div>
+
+    <!-- Owner -->
+    <div class="owner">
+      <div class="avatar">F</div>
+      <div class="info">
+        <div class="name">Filmer 自营</div>
+        <div class="meta">上海 · 24h 内发货 · 98% 守约率</div>
+      </div>
+      <span class="badge">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+        自营认证
+      </span>
+    </div>
+
+    <!-- Specs -->
+    <div class="section-title" style="padding-bottom:0">
+      <div class="h">规格参数 <small>展开 ▾</small></div>
+    </div>
+    <div style="margin:0 16px;padding:14px;background:var(--card);border-radius:3px;border-top:2px solid rgba(201,169,110,0.2);position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%)"></div>
+      <div style="position:relative">
+        <div class="spec-row"><span class="k">品牌</span><span class="v">Leica · 德国</span></div>
+        <div class="spec-row"><span class="k">型号</span><span class="v">M6 (Classic)</span></div>
+        <div class="spec-row"><span class="k">取景器倍率</span><span class="v">0.72×</span></div>
+        <div class="spec-row"><span class="k">画幅</span><span class="v">135 全画幅 (24×36mm)</span></div>
+        <div class="spec-row"><span class="k">快门</span><span class="v">1s - 1/1000s 机械</span></div>
+        <div class="spec-row"><span class="k">测光</span><span class="v">TTL 中央加权</span></div>
+        <div class="spec-row"><span class="k">机身重量</span><span class="v">560g</span></div>
+        <div class="spec-row"><span class="k">成色</span><span class="v">95 新 · 轻微使用痕迹</span></div>
+        <div class="spec-row"><span class="k">附件</span><span class="v">机身 + 背带 + 电池</span></div>
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="section-title">
+      <div class="h">用户评价 <small>286 条</small></div>
+      <div class="action">全部
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+    <div style="padding:0 16px">
+      <div class="review-card">
+        <div class="h">
+          <div class="avatar">陈</div>
+          <div>
+            <div class="uname">陈同学</div>
+            <div class="stars">★★★★★ · 5.0</div>
+          </div>
+        </div>
+        <div class="text">第一次玩旁轴，M6 黄斑对焦真的爽。机身成色很好，快门手感扎实，客服也专业。</div>
+        <div class="date">2026-07-12 · 租赁 3 天</div>
+      </div>
+
+      <div class="review-card">
+        <div class="h">
+          <div class="avatar">林</div>
+          <div>
+            <div class="uname">林野</div>
+            <div class="stars">★★★★★ · 5.0</div>
+          </div>
+        </div>
+        <div class="text">第二次在 Filmer 租了，体验一如既往。取景器明亮，配 35mm 镜头扫街绝了。</div>
+        <div class="date">2026-07-05 · 租赁 5 天</div>
+      </div>
+    </div>
+
+    <!-- Related notes -->
+    <div class="section-title">
+      <div class="h">相关笔记</div>
+      <div class="action">更多
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+    <div class="scroll-x" style="padding-bottom:16px">
+      <div class="note-card">
+        <div class="cover">
+          <div class="cover-icon">M6</div>
+        </div>
+        <div class="body">
+          <div class="title">徕卡 M6 入门指南：黄斑对焦怎么玩</div>
+          <div class="author">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            @shoot_essay · 阅读 1.2k
+          </div>
+        </div>
+      </div>
+
+      <div class="note-card">
+        <div class="cover">
+          <div class="cover-icon">RF</div>
+        </div>
+        <div class="body">
+          <div class="title">M6 + Portra 400：我的银盐配方</div>
+          <div class="author">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            @film_diary · 阅读 856
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="bottom-bar">
+      <div class="info">
+        <div class="date-input" onclick="selectDate()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+          <span id="date-range">7/22 - 7/25</span>
+          <span class="days" id="days-count">3 天</span>
+        </div>
+        <div class="ins-row" onclick="toggleInsurance(this)">
+          <span class="toggle" id="ins-toggle"></span>
+          <span>损坏险 ¥10/天</span>
+        </div>
+      </div>
+      <button class="btn" onclick="goOrder()">立即租赁</button>
+    </div>
+  </div>
+
+  <!-- ============ Screen 5: Order Confirmation ============ -->
+  <div class="screen" id="screen-rental-order">
+    <div class="top-bar">
+      <div class="icon-btn" onclick="showScreen('screen-camera-detail')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="title">确认订单</div>
+      <div style="width:36px"></div>
+    </div>
+
+    <!-- Snap -->
+    <div style="padding-top:12px">
+      <div class="snap">
+        <div class="thumb leica">LEICA</div>
+        <div class="info">
+          <div class="name">徕卡 Leica M6</div>
+          <div class="meta">135 全画幅 · 0.72 倍取景器<br><span id="order-date">2026/07/22 - 2026/07/25</span> · <span id="order-days">3</span> 天</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price detail -->
+    <div class="summary">
+      <div class="row"><span class="k">日租</span><span class="v"><span id="sum-rent">¥150</span> × <span id="sum-days">3</span> = ¥<span id="sum-rent-total">450</span></span></div>
+      <div class="row"><span class="k">损坏险</span><span class="v" id="sum-ins-row"><span id="sum-ins">¥10</span> × <span id="sum-days2">3</span> = ¥<span id="sum-ins-total">30</span></span></div>
+      <div class="row"><span class="k">押金（冻结）</span><span class="v">¥2000</span></div>
+      <div class="row"><span class="k">配送</span><span class="v" style="color:var(--success)">顺丰包邮</span></div>
+      <div class="row"><span class="k">优惠券</span><span class="v" style="color:var(--text-light)">无可用 -</span></div>
+      <div class="total"><span>应付 <small style="font-size:12px;color:var(--text-light);font-weight:400;font-family:'Inter',sans-serif">（不含押金）</small></span><span class="v">¥<span id="sum-final">480</span></span></div>
+    </div>
+
+    <!-- Address -->
+    <div class="address" onclick="showToast('切换地址')">
+      <div class="icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 22s-8-7.5-8-13a8 8 0 1 1 16 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="9" r="3"/></svg>
+      </div>
+      <div class="info">
+        <div class="name">宋润芃 · 138 **** 9024</div>
+        <div class="addr">上海市 徐汇区 衡山路 1234 弄 56 号 8F</div>
+      </div>
+      <div class="arrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+
+    <!-- Note -->
+    <div class="note-input" onclick="showToast('添加备注')">
+      <span>备注：给商家留言（可选）</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- Agreement hint -->
+    <div style="padding:12px 16px;display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--text-light);line-height:1.6">
+      <span class="toggle active" style="margin-top:2px;width:14px;height:14px"></span>
+      <span>租赁即表示同意 <span style="color:var(--brass)">《Filmer 租赁服务协议》</span>，损坏需按成色折旧赔偿</span>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="bottom-bar">
+      <div class="info">
+        <div class="meta">应付（含损坏险，不含押金）</div>
+        <div class="price">¥<span id="bottom-final">480</span></div>
+      </div>
+      <button class="btn" onclick="submitOrder()">提交订单</button>
+    </div>
+  </div>
+
+  <!-- ============ Screen 6: Order Detail ============ -->
+  <div class="screen" id="screen-rental-order-detail">
+    <div class="top-bar">
+      <div class="icon-btn" onclick="showScreen('screen-my-rentals')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="title">租赁订单</div>
+      <div class="right">
+        <div class="icon-btn" onclick="showToast('联系客服')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status timeline -->
+    <div style="padding-top:8px">
+      <div class="timeline-block">
+        <div class="tl-item">
+          <div class="dot done"></div>
+          <div class="line"></div>
+          <div style="flex:1">
+            <div class="time">2026-07-21 10:30</div>
+            <div class="label">订单已提交</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="dot done"></div>
+          <div class="line"></div>
+          <div style="flex:1">
+            <div class="time">2026-07-21 11:00</div>
+            <div class="label">支付成功 · ¥480</div>
+          </div>
+        </div>
+        <div class="tl-item current">
+          <div class="dot current"></div>
+          <div class="line"></div>
+          <div style="flex:1">
+            <div class="time">2026-07-21 15:00</div>
+            <div class="label">待发货（商家打包中）</div>
+          </div>
+        </div>
+        <div class="tl-item future">
+          <div class="dot"></div>
+          <div class="line"></div>
+          <div style="flex:1">
+            <div class="time">预计 2026-07-22</div>
+            <div class="label">待收件 · 顺丰 SF1234567890</div>
+          </div>
+        </div>
+        <div class="tl-item future">
+          <div class="dot"></div>
+          <div style="flex:1">
+            <div class="time">2026/07/22 - 07/25</div>
+            <div class="label">拍摄中</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logistics -->
+    <div class="logistics" onclick="showToast('查看物流详情')">
+      <div class="icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      </div>
+      <div class="info">
+        <div class="name">顺丰速运</div>
+        <div class="no">SF1234567890</div>
+      </div>
+      <span class="tag warn">待揽件</span>
+    </div>
+
+    <!-- Address -->
+    <div class="address">
+      <div class="icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 22s-8-7.5-8-13a8 8 0 1 1 16 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="9" r="3"/></svg>
+      </div>
+      <div class="info">
+        <div class="name">宋润芃 · 138 **** 9024</div>
+        <div class="addr">上海市 徐汇区 衡山路 1234 弄 56 号 8F</div>
+      </div>
+    </div>
+
+    <!-- Snap -->
+    <div class="snap">
+      <div class="thumb leica">LEICA</div>
+      <div class="info">
+        <div class="name">徕卡 Leica M6</div>
+        <div class="meta">135 全画幅 · 押金 ¥2000<br>含损坏险 · 3 天</div>
+      </div>
+    </div>
+
+    <!-- Info rows -->
+    <div style="margin:0 16px;background:var(--card);border-radius:3px;border-top:2px solid rgba(201,169,110,0.2);position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.3) 100%)"></div>
+      <div style="position:relative">
+        <div class="info-row"><span class="k">订单编号</span><span class="v">ORD202607210001</span></div>
+        <div class="info-row"><span class="k">租赁日期</span><span class="v">7/22 - 7/25（3 天）</span></div>
+        <div class="info-row"><span class="k">归还日期</span><span class="v">2026/07/25</span></div>
+        <div class="info-row"><span class="k">日租 / 损坏险</span><span class="v">¥150 / ¥10</span></div>
+        <div class="info-row"><span class="k">押金状态</span><span class="v brass">已冻结 ¥2000</span></div>
+        <div class="info-row"><span class="k">合计支付</span><span class="v">¥480</span></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-group" style="margin-top:16px">
+      <button class="btn ghost" onclick="showToast('已提醒发货')">提醒发货</button>
+      <button class="btn outline" onclick="showToast('取消订单')">取消订单</button>
+    </div>
+    <div style="margin:0 16px 20px">
+      <button class="btn" onclick="showToast('查看物流')">查看物流</button>
+    </div>
+  </div>
+
+  <!-- ============ Screen 7: My Rentals ============ -->
+  <div class="screen" id="screen-my-rentals">
+    <div class="top-bar">
+      <div class="icon-btn" onclick="showScreen('screen-rental-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="title">我的租赁</div>
+      <div class="right">
+        <div class="icon-btn" onclick="showToast('租赁记录')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-tabs">
+      <div class="tab-item active" onclick="setRentalTab(this,'screen-my-rentals')">全部 <span style="color:var(--text-light);font-size:11px">3</span></div>
+      <div class="tab-item" onclick="setRentalTab(this,'screen-my-rentals')">进行中 <span style="color:var(--text-light);font-size:11px">1</span></div>
+      <div class="tab-item" onclick="setRentalTab(this,'screen-my-rentals')">待归还 <span style="color:var(--text-light);font-size:11px">1</span></div>
+      <div class="tab-item" onclick="setRentalTab(this,'screen-my-rentals')">已完成</div>
+    </div>
+
+    <div style="padding-top:16px">
+
+      <!-- Order 1: shooting -->
+      <div class="order-card card" onclick="showScreen('screen-rental-order-detail')">
+        <div class="head">
+          <span class="id">ORD202607150021</span>
+          <span class="status">拍摄中</span>
+        </div>
+        <div class="body">
+          <div class="thumb leica">LEICA</div>
+          <div class="info">
+            <div class="name">徕卡 Leica M6</div>
+            <div class="meta">7/15 - 7/22 · 7 天<br>归还倒计时 <strong style="color:var(--brass)">2 天</strong></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn outline" onclick="event.stopPropagation();showToast('去归还')">去归还</button>
+          <button class="btn ghost" onclick="event.stopPropagation();showToast('再次租赁')">再次租赁</button>
+        </div>
+      </div>
+
+      <!-- Order 2: pending shipment -->
+      <div class="order-card card" onclick="showScreen('screen-rental-order-detail')">
+        <div class="head">
+          <span class="id">ORD202607210001</span>
+          <span class="status">待发货</span>
+        </div>
+        <div class="body">
+          <div class="thumb hasselblad">HASSEL</div>
+          <div class="info">
+            <div class="name">哈苏 Hasselblad 500CM</div>
+            <div class="meta">7/22 - 7/25 · 3 天<br>顺丰 SF1234567890</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn outline" onclick="event.stopPropagation();showToast('提醒发货')">提醒发货</button>
+          <button class="btn ghost" onclick="event.stopPropagation();showToast('查看物流')">查看物流</button>
+        </div>
+      </div>
+
+      <!-- Order 3: completed -->
+      <div class="order-card card" onclick="showToast('查看已完成订单')">
+        <div class="head">
+          <span class="id">ORD202607140003</span>
+          <span class="status" style="color:var(--text-light)">已完成 · 7 天前</span>
+        </div>
+        <div class="body">
+          <div class="thumb contax">CONTAX</div>
+          <div class="info">
+            <div class="name">Contax T2</div>
+            <div class="meta">7/08 - 7/14 · 6 天<br>押金 ¥3500 已退回</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn outline" onclick="event.stopPropagation();showToast('再次租赁')">再次租赁</button>
+          <button class="btn ghost" onclick="event.stopPropagation();showToast('去评价')">去评价</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:24px 0 16px;color:var(--text-light);font-size:12px">- 没有更多了 -</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ========== Screen switcher ========== */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) {
+    target.classList.add('active');
+    target.scrollTop = 0;
+  }
+}
+
+/* ========== Tab switch (rental home + my rentals) ========== */
+function setRentalTab(el, screenId) {
+  const siblings = el.parentElement.querySelectorAll('.tab-item');
+  siblings.forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  showScreen(screenId);
+}
+
+/* ========== Camera data (shared between screens) ========== */
+const cameras = [
+  {
+    key: 'leica-m6',
+    mainText: 'LEICA',
+    name: '徕卡 Leica M6',
+    sub: '0.72 倍取景器 · 旁轴黄斑 · 135 全画幅',
+    brand: 'Leica · 德国',
+    model: 'M6 (Classic)',
+    finder: '0.72×',
+    format: '135 全画幅 (24×36mm)',
+    shutter: '1s - 1/1000s 机械',
+    metering: 'TTL 中央加权',
+    weight: '560g',
+    condition: '95 新 · 轻微使用痕迹',
+    accessory: '机身 + 背带 + 电池',
+    conditionTag: '95 新',
+    rental: 150,
+    deposit: 2000,
+    insurance: 10,
+    rentals: 286,
+    rating: 4.9
+  },
+  {
+    key: 'hasselblad-500cm',
+    mainText: 'HASSELBLAD',
+    name: '哈苏 Hasselblad 500CM',
+    sub: '6×6 中画幅 · 腰平取景 · Zeiss 80mm',
+    brand: 'Hasselblad · 瑞典',
+    model: '500CM',
+    finder: '腰平取景器',
+    format: '120 中画幅 (6×6)',
+    shutter: '1s - 1/500s 机械',
+    metering: '外置测光',
+    weight: '1380g',
+    condition: '99 新 · 近全新',
+    accessory: '机身 + A12 后背 + Zeiss 80mm',
+    conditionTag: '99 新',
+    rental: 280,
+    deposit: 5000,
+    insurance: 25,
+    rentals: 142,
+    rating: 4.9
+  }
+];
+
+/* ========== Select camera and update detail screen ========== */
+function selectCamera(idx) {
+  const c = cameras[idx] || cameras[0];
+  document.getElementById('detail-main-text').textContent = c.mainText;
+  document.getElementById('detail-name').textContent = c.name;
+  document.getElementById('detail-sub').textContent = c.sub;
+  document.getElementById('detail-title').textContent = c.name.split(' ')[0];
+}
+
+/* ========== Date selection ========== */
+function selectDate() {
+  const input = prompt('选择租赁天数（1-30）', localStorage.getItem('rental-days') || '3');
+  if (!input) return;
+  const days = Math.max(1, Math.min(30, parseInt(input) || 3));
+  localStorage.setItem('rental-days', String(days));
+
+  const start = new Date(2026, 6, 22); // 2026-07-22
+  const end = new Date(start);
+  end.setDate(end.getDate() + days - 1);
+
+  const fmt = d => `${d.getMonth() + 1}/${d.getDate()}`;
+  const fmtFull = d => `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+
+  document.getElementById('date-range').textContent = `${fmt(start)} - ${fmt(end)}`;
+  document.getElementById('days-count').textContent = `${days} 天`;
+  document.getElementById('order-date').textContent = `${fmtFull(start)} - ${fmtFull(end)}`;
+  document.getElementById('order-days').textContent = days;
+
+  updateRentalSummary();
+  showToast(`已选择 ${days} 天`);
+}
+
+/* ========== Insurance toggle ========== */
+function toggleInsurance(el) {
+  const toggle = el.querySelector('.toggle') || (el.classList.contains('toggle') ? el : document.getElementById('ins-toggle'));
+  toggle.classList.toggle('active');
+  updateRentalSummary();
+  showToast(toggle.classList.contains('active') ? '已添加损坏险' : '已移除损坏险');
+}
+
+/* ========== Update price summary ========== */
+function updateRentalSummary() {
+  const days = parseInt(localStorage.getItem('rental-days') || '3');
+  const insActive = document.getElementById('ins-toggle').classList.contains('active');
+  const rentPerDay = 150;
+  const insPerDay = 10;
+
+  const rentTotal = rentPerDay * days;
+  const insTotal = insActive ? insPerDay * days : 0;
+  const finalTotal = rentTotal + insTotal;
+
+  const sumDaysEls = document.querySelectorAll('#sum-days, #sum-days2');
+  sumDaysEls.forEach(e => e.textContent = days);
+  document.getElementById('sum-rent-total').textContent = rentTotal;
+  document.getElementById('sum-ins-total').textContent = insTotal;
+  document.getElementById('sum-final').textContent = finalTotal;
+  document.getElementById('bottom-final').textContent = finalTotal;
+
+  const insRow = document.getElementById('sum-ins-row');
+  if (insRow) {
+    if (insActive) {
+      insRow.style.display = 'flex';
+      insRow.innerHTML = `<span class="k">损坏险</span><span class="v">¥${insPerDay} × ${days} = ¥${insTotal}</span>`;
+    } else {
+      insRow.style.display = 'flex';
+      insRow.innerHTML = `<span class="k">损坏险</span><span class="v" style="color:var(--text-light)">未选购</span>`;
+    }
+  }
+}
+
+/* ========== Submit / Order flow ========== */
+function goOrder() {
+  updateRentalSummary();
+  showScreen('screen-rental-order');
+}
+
+function submitOrder() {
+  showToast('订单已提交');
+  setTimeout(() => showScreen('screen-rental-order-detail'), 600);
+}
+
+/* ========== Favorite toggle ========== */
+function toggleFav(btn) {
+  const svg = btn.querySelector('svg');
+  const filled = svg.getAttribute('fill') !== 'none';
+  if (filled) {
+    svg.setAttribute('fill', 'none');
+    showToast('已取消收藏');
+  } else {
+    svg.setAttribute('fill', 'currentColor');
+    svg.style.color = 'var(--kodak)';
+    showToast('已收藏');
+  }
+}
+
+/* ========== Carousel thumb picker ========== */
+function pickThumb(el, text) {
+  document.querySelectorAll('.carousel .thumb-s').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('detail-main-text').textContent = text;
+}
+
+/* ========== Toast ========== */
+function showToast(msg) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+/* ========== Init ========== */
+window.addEventListener('load', () => {
+  updateRentalSummary();
+});
+</script>
+
+<script src="../shared/filmer-v3.js"></script>
+
+</body>
+</html>

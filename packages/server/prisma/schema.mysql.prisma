@@ -1,0 +1,172 @@
+// Filmer · 生产 MySQL Schema
+// 本地与测试继续使用 schema.prisma(SQLite)，生产迁移显式指定本文件。
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== 用户 =====
+
+model User {
+  id        String   @id @default(cuid())
+  openid    String?  @unique               // 微信小程序 AppID 下唯一, mock 模式可空
+  unionid   String?  @unique
+  nickname  String?
+  phone     String?
+  role      String   @default("user")      // user | admin
+  createdAt DateTime @default(now())
+
+  orders    Order[]
+}
+
+// ===== 冲扫店(MVP 单店) =====
+
+model ScanShop {
+  id           String  @id @default(cuid())
+  name         String
+  city         String
+  address      String
+  phone        String
+  rating       Float                         // sqlite 用 Float,生产可改 Decimal(2,1)
+  basePriceC41 Int                            // 单价(分)
+  basePriceE6  Int
+  basePriceBW  Int
+  hiResFee     Int     @default(0)
+  rushFee      Int     @default(0)
+  isActive     Boolean @default(true)
+  createdAt    DateTime @default(now())
+
+  orders       Order[]
+}
+
+// ===== 订单 =====
+// status 状态机: pending_pay → paid | closed
+//                paid      → finished | refunding
+//                refunding → refunded
+//                closed / finished / refunded 是终态
+
+model Order {
+  id          String   @id @default(cuid())
+  outTradeNo  String   @unique              // 商户单号(冗余,便于查询)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  shopId      String
+  shop        ScanShop @relation(fields: [shopId], references: [id])
+
+  filmFormat  String                         // 135 | 120
+  rolls       Int                            // 1-10
+  process     String                         // C41 | E6 | BW
+  package     String                         // standard | fine
+  hiRes       Boolean @default(false)
+  rush        Boolean @default(false)
+
+  amount      Int                            // 服务端计算 = 应付(分)
+  coupon      Int      @default(0)           // 优惠(分,预留)
+  paid        Int      @default(0)           // 累计实付(分)
+
+  status      String                         // 见 OrderStatus
+  expireAt    DateTime                       // pending_pay 超时时间
+  paidAt      DateTime?
+  cancelledAt DateTime?
+  closedAt    DateTime?
+  finishedAt  DateTime?
+  refundedAt  DateTime?
+
+  receiverName  String?
+  receiverPhone String?
+  receiverAddr  String?
+  remark        String?
+
+  attempts    PaymentAttempt[]
+  refunds     Refund[]
+  events      OrderEvent[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([status, expireAt])
+}
+
+model OrderEvent {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  fromStatus String?
+  toStatus   String
+  reason     String?
+  payload    String?                       // JSON.stringify(sqlite 兼容)
+  createdAt  DateTime @default(now())
+
+  @@index([orderId])
+}
+
+// ===== 支付尝试 =====
+// 一次订单可能对应多笔支付尝试(超时重试等)
+
+model PaymentAttempt {
+  id             String   @id @default(cuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id])
+  outTradeNo     String   @unique            // 商户支付单号
+  transactionId  String?  @unique            // 微信支付订单号(成功后才有)
+  notifyId       String?  @unique            // 微信通知 ID(去重)
+  prepayId       String?                      // 微信 prepay_id
+  amount         Int                          // 尝试支付金额(分)
+  status         String                       // pending | success | closed | refunded
+  successTime    DateTime?
+  rawNotify      String?                      // 解密后的回调(简单 mock 时 JSON 字符串)
+  userOpenid     String                       // 下单时用户的 openid
+  appid          String                       // 校验回调用
+  mchid          String                       // 校验回调用
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+// ===== 退款 =====
+// MVP 只用单笔全额,但模型允许多笔(为 Phase 2 部分退款预留)
+
+model Refund {
+  id              String   @id @default(cuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id])
+  outRefundNo     String   @unique            // 商户退款单号
+  refundId        String?  @unique            // 微信退款单号
+  notifyId        String?  @unique
+  transactionId   String                       // 原 transactionId
+  outTradeNo      String                       // 原 outTradeNo
+  requestedAmount Int
+  successAmount   Int      @default(0)
+  status          String                       // pending | success | failed
+  reason          String
+  requestedBy     String                       // 管理员 userId
+  approvedBy      String?
+  failureReason   String?
+  successTime     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+// ===== 幂等键 =====
+// 下单 / 退款 等写入接口用 Idempotency-Key header 在此落库去重
+
+model IdempotencyKey {
+  key        String   @id                     // client 传的 header
+  scope      String                            // 'order.create' / 'refund.create'
+  userId     String
+  responseBody String                         // 第一次的响应 body
+  createdAt  DateTime @default(now())
+
+  @@index([userId, scope])
+}
